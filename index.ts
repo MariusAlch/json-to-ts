@@ -1,20 +1,17 @@
 import {
-  compareByTypes,
-  findIdByType,
+  getIdByTypeObject,
   guid,
-  isAdvancedType,
   isArray,
-  isObjectLiteral,
+  isObject,
   TypeDescription,
   TypeReference,
-  createTypeDescription
+  createTypeDescription,
+  getSimpleTypeReference,
+  getTypeGroup,
+  TypeGroup
 } from './lib'
 
-// TODO: array possible different types
-// TODO: possible empty array
-// TODO: ahndle null values currenty isObject(null) === true
-
-const marius = {
+const test1 = {
   m: {
     c: 'd',
     e: 13,
@@ -29,59 +26,61 @@ const marius = {
     arr: [
       { a: 'b' },
       { a: 'b' }
-    ]
+    ],
+    emptyArr: [],
+    shit: null
   },
   b: 'a'
 }
 
-function getFlatTypeDefinition(value: any, types: TypeDescription[]): { typeRef: TypeReference | string, types: TypeDescription[] } {
-  if (isAdvancedType(value)) {
+function createTypeObject(obj: any, types: TypeDescription[]): any {
+  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
+      const {typeRef} = getTypeInfo(value, types);
+      
+      return {
+        [key]: typeRef,
+        ...typeObj
+      }
+    },
+    {}
+  )
+}
 
-    let arrFlag = false
-    let typeObj
+function getTypeInfo(value: any, types: TypeDescription[] = []): { typeRef: TypeReference, types: TypeDescription[] } {
+  switch (getTypeGroup(value)) {
 
-    if (isArray(value)) {
-      typeObj = getTypeInfo(value[0], types).typeObj
-      arrFlag = true
-    } else if (isObjectLiteral(value)) {
-      typeObj = getTypeInfo(value, types).typeObj
-    }
+    case TypeGroup.Array:
+      const ids = value
+        .map(el => getTypeInfo(el, types).typeRef)
+        .filter( (id, i, arr) => arr.indexOf(id) === i)
 
-    let id = findIdByType(typeObj, types)
+      return {
+        typeRef: ids,
+        types
+      }
 
-    return {
-      typeRef: {
-        id,
-        array: arrFlag,
-      },
-      types
-    }
-  } else {
-    return {
-      typeRef: typeof value,
-      types
-    }
+    case TypeGroup.Object:
+      const typeObj = createTypeObject(value, types)
+      const id = getIdByTypeObject(typeObj, types)
+
+      return {
+        typeRef: id,
+        types
+      }
+
+    case TypeGroup.Primitive:
+      const typeRef = getSimpleTypeReference(value)
+
+      return {
+        typeRef,
+        types
+      }
+
   }
 }
 
-function getTypeInfo (obj, types?: TypeDescription[]): {typeObj: any, types: TypeDescription[]} {
-  // already defined type for reuseing if possible
-  types = types || [];
-
-  // current obj type info (filled in entries for each loop)
-  let typeObj = {};
-
-  // go through key value pair and identify (create of reuse) type for value
-  Object.entries(obj).forEach( ([key, value]) => {
-    const {typeRef: t, types: newTypes} = getFlatTypeDefinition(value, types);
-    typeObj[key] = t;
-    types = newTypes;
-  })
-
-  return {
-    typeObj,
-    types
-  }
-}
-
-console.log(getTypeInfo(marius))
+console.log(JSON.stringify(
+    getTypeInfo(test1),
+    null,
+    4
+))

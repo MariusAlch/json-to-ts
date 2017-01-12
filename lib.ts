@@ -1,12 +1,17 @@
+export function createTypeDescription (typeObj): TypeDescription {
+  return {
+    id: guid(),
+    typeObj
+  }
+}
 
-const types: TypeDescription[] = [];
-export function findIdByType (type: any, types: TypeDescription[]): string {
-  let typeDesc = types.find(typeObj => {
-    return compareByTypes(typeObj.typeObj, type)
+export function getIdByTypeObject (typeObj: any, types: TypeDescription[]): string {
+  let typeDesc = types.find(el => {
+    return compareTypeObjects(el.typeObj, typeObj)
   })
 
   if(!typeDesc) {
-    typeDesc = createTypeDescription(type)
+    typeDesc = createTypeDescription(typeObj)
     types.push(typeDesc)
   }
 
@@ -23,45 +28,56 @@ export function guid (): string {
     s4() + '-' + s4() + s4() + s4()
 }
 
-// no deep compare, arguments always objects always defined never null
-export function compareByTypes (a, b): boolean {
-  const keysA = Object.keys(a)
-  const keysB = Object.keys(b)
+export function compareTypeObjects (a, b): boolean {
+  const entriesA = Object.entries(a)
+  const entriesB = Object.entries(b)
 
-  const sameLength = keysA.length === keysB.length
+  const sameLength = entriesA.length === entriesB.length
 
-  const sameTypes = keysA.every(key => {
-    return a[key] === b[key]
+  const sameTypes = entriesA.every( ([key, value]) => {
+    return b[key] === value
   })
 
   return sameLength && sameTypes
+}
+
+function hasSamePrimitiveElements(a: any[], b: any[]) {
+  return a.every( el => b.indexOf(el) !== -1);
 }
 
 export function isArray (x) {
   return Object.prototype.toString.call(x) === '[object Array]'
 }
 
-export function isObjectLiteral (x) {
-  return Object.prototype.toString.call(x) === '[object Object]'
+export function isObject (x) {
+  return Object.prototype.toString.call(x) === '[object Object]' && x !== null;
 }
 
-export function isAdvancedType (obj) {
-  return isArray(obj) || isObjectLiteral(obj)
-}
-
-export function createTypeDescription (typeObj): TypeDescription {
-  return {
-    id: guid(),
-    typeObj
+export function getSimpleTypeReference (value: any): TypeReference {
+  if(value === null) {
+    return 'null'
+  } else {
+    return typeof value
   }
 }
+
+export function getTypeGroup(value: any): TypeGroup {
+  if(isArray(value)) {
+    return TypeGroup.Array
+  } else if (isObject(value)) {
+    return TypeGroup.Object
+  } else {
+    return TypeGroup.Primitive
+  }
+}
+
+export enum TypeGroup {
+  Primitive, Array, Object
+}
+
+export type TypeReference = string[] | string;
 
 export interface TypeDescription {
   id: string;
   typeObj: any;
-}
-
-export interface TypeReference {
-  id: string;
-  array: boolean;
 }
