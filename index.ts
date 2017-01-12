@@ -1,86 +1,42 @@
 import {
-  getIdByTypeObject,
-  guid,
-  isArray,
-  isObject,
-  TypeDescription,
-  TypeReference,
-  createTypeDescription,
-  getSimpleTypeReference,
-  getTypeGroup,
-  TypeGroup
+  getTypeInfo,
+  prettyPrint,
+  typesSummaryIterator
 } from './lib'
 
+import {
+  TypeDescription,
+  TypeReference,
+  TypeGroup,
+  TypesSummary,
+} from './model'
+
 const test1 = {
-  m: {
-    c: 'd',
-    e: 13,
-    l: {
-      w: false,
-      q: 'la'
+  forest: {
+    grass: 'green',
+    age: 13,
+    oak: {
+      natural: false,
+      name: 'good tree'
     },
-    abc: {
-      w: true,
-      q: 'ladasd'
+    willow: {
+      natural: true,
+      name: 'willam'
     },
-    arr: [
-      { a: 'b' },
-      { a: 'b' }
+    animals: [
+      { species: 'rabbit' },
+      { species: 'fox' }
     ],
-    emptyArr: [],
-    shit: null
+    humans: [],
+    officer: null
   },
-  b: 'a'
+  name: 'beauty-forest'
 }
 
-function createTypeObject(obj: any, types: TypeDescription[]): any {
-  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
-      const {typeRef} = getTypeInfo(value, types);
-      
-      return {
-        [key]: typeRef,
-        ...typeObj
-      }
-    },
-    {}
-  )
-}
+const typesSummary = getTypeInfo(test1)
 
-function getTypeInfo(value: any, types: TypeDescription[] = []): { typeRef: TypeReference, types: TypeDescription[] } {
-  switch (getTypeGroup(value)) {
+prettyPrint(typesSummary)
 
-    case TypeGroup.Array:
-      const ids = value
-        .map(el => getTypeInfo(el, types).typeRef)
-        .filter( (id, i, arr) => arr.indexOf(id) === i)
-
-      return {
-        typeRef: ids,
-        types
-      }
-
-    case TypeGroup.Object:
-      const typeObj = createTypeObject(value, types)
-      const id = getIdByTypeObject(typeObj, types)
-
-      return {
-        typeRef: id,
-        types
-      }
-
-    case TypeGroup.Primitive:
-      const typeRef = getSimpleTypeReference(value)
-
-      return {
-        typeRef,
-        types
-      }
-
-  }
-}
-
-console.log(JSON.stringify(
-    getTypeInfo(test1),
-    null,
-    4
-))
+typesSummaryIterator(typesSummary, function (ref, name) {
+  console.log(ref, name)
+})
