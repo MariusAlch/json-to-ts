@@ -1,18 +1,19 @@
 import {
-  getTypeInfo,
+  getTypeGroup,
   prettyPrint,
-  typesSummaryIterator
+  getIdByType,
+  getSimpleTypeName
 } from './lib'
 
 import {
   TypeDescription,
-  TypeReference,
   TypeGroup,
   TypesSummary,
 } from './model'
 
 const test1 = {
   forest: {
+    marius: [{a: 'b'}, {a: 'b'}],
     grass: 'green',
     age: 13,
     oak: {
@@ -33,10 +34,59 @@ const test1 = {
   name: 'beauty-forest'
 }
 
-const typesSummary = getTypeInfo(test1)
+const test2 = [
+  {a: 1},
+  {b: 2},
+]
 
-prettyPrint(typesSummary)
+export function createTypeObject(obj: any, types: TypeDescription[]): any {
+  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
+      const {rootType} = getTypeInfo(value, types)
 
-typesSummaryIterator(typesSummary, function (ref, name) {
-  console.log(ref, name)
-})
+      return {
+        [key]: rootType,
+        ...typeObj
+      }
+    },
+    {}
+  )
+}
+
+export function getTypeInfo(
+  targetObj: any, // object that we want to create types for
+  types: TypeDescription[] = [],
+): TypesSummary {
+  switch (getTypeGroup(targetObj)) {
+
+    case TypeGroup.Array:
+      const typesOfArray = (<any[]>targetObj)
+      .map( _ => getTypeInfo(_, types).rootType)
+      .filter( (id, i, arr) => arr.indexOf(id) === i)
+
+      const arrayType = getIdByType(typesOfArray, types)
+
+      return {
+        rootType: arrayType,
+        types
+      }
+
+    case TypeGroup.Object:
+      const typeObj = createTypeObject(targetObj, types)
+      const objType = getIdByType(typeObj, types)
+
+      return {
+        rootType: objType,
+        types
+      }
+
+    case TypeGroup.Primitive:
+      const simpleType = getSimpleTypeName(targetObj)
+
+      return {
+        rootType: simpleType,
+        types
+      }
+  }
+}
+
+prettyPrint(getTypeInfo(test1))

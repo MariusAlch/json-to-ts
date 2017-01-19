@@ -1,20 +1,27 @@
 import {
   TypeDescription,
   TypeGroup,
-  TypesSummary,
-  TypeReference
+  TypesSummary
 } from './model'
 
-export function createTypeDescription (typeObj): TypeDescription {
-  return {
-    id: UUID(),
-    typeObj
+export function createTypeDescription (typeObj: any | string[]): TypeDescription {
+  if (isArray(typeObj)) {
+    return {
+      id: UUID(),
+      arrayOfTypes: typeObj
+    }
+  } else {
+    return {
+      id: UUID(),
+      typeObj
+    }
   }
 }
 
-export function getIdByTypeObject (typeObj: any, types: TypeDescription[]): string {
+export function getIdByType (typeObj: any | string[], types: TypeDescription[]): string {
+
   let typeDesc = types.find(el => {
-    return compareTypeObjects(el.typeObj, typeObj)
+    return typeObjectMatchesTypeDesc(typeObj, el)
   })
 
   if (!typeDesc) {
@@ -35,14 +42,37 @@ export function UUID (): string {
     s4() + '-' + s4() + s4() + s4()
 }
 
-export function compareTypeObjects (a, b): boolean {
-  const entriesA = Object.entries(a)
-  const entriesB = Object.entries(b)
+export function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: TypeDescription): boolean {
 
-  const sameLength = entriesA.length === entriesB.length
+  if (isArray(typeObj)) {
+    return arraysContainSameElements(typeObj, typeDesc.arrayOfTypes)
+  } else {
+    return objectsHaveSameEntries(typeObj, typeDesc.typeObj)
+  }
 
-  const sameTypes = entriesA.every( ([key, value]) => {
-    return b[key] === value
+}
+
+function arraysContainSameElements(arr1: any[], arr2: any[]): boolean {
+  if (arr1 === undefined || arr2 === undefined) return false
+
+  const filteredArray = arr1.filter( value => {
+      return arr2.indexOf(value) > -1
+  })
+
+  return filteredArray.length === arr1.length
+}
+
+function objectsHaveSameEntries(obj1: any, obj2: any): boolean {
+  if (obj1 === undefined || obj2 === undefined) return false
+
+
+  const entries1 = Object.entries(obj1)
+  const entries2 = Object.entries(obj2)
+
+  const sameLength = entries1.length === entries2.length
+
+  const sameTypes = entries1.every( ([key, value]) => {
+    return obj2[key] === value
   })
 
   return sameLength && sameTypes
@@ -60,7 +90,7 @@ export function isObject (x) {
   return Object.prototype.toString.call(x) === '[object Object]' && x !== null
 }
 
-export function getSimpleTypeReference (value: any): TypeReference {
+export function getSimpleTypeName (value: any): string {
   if (value === null) {
     return 'null'
   } else {
@@ -77,61 +107,10 @@ export function getTypeGroup(value: any): TypeGroup {
     return TypeGroup.Primitive
   }
 }
-
-export function createTypeObject(obj: any, types: TypeDescription[]): any {
-  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
-      const {typeRef} = getTypeInfo(value, types)
-
-      return {
-        [key]: typeRef,
-        ...typeObj
-      }
-    },
-    {}
-  )
-}
-
-export function getTypeInfo(value: any, types: TypeDescription[] = []): TypesSummary {
-  switch (getTypeGroup(value)) {
-
-    case TypeGroup.Array:
-      const ids = value
-        .map(el => getTypeInfo(el, types).typeRef)
-        .filter( (id, i, arr) => arr.indexOf(id) === i)
-
-      return {
-        typeRef: ids,
-        types
-      }
-
-    case TypeGroup.Object:
-      const typeObj = createTypeObject(value, types)
-      const id = getIdByTypeObject(typeObj, types)
-
-      return {
-        typeRef: id,
-        types
-      }
-
-    case TypeGroup.Primitive:
-      const typeRef = getSimpleTypeReference(value)
-
-      return {
-        typeRef,
-        types
-      }
-
-  }
-}
-
 export function prettyPrint(json) {
   console.log(
     JSON.stringify(json, null, 4)
   )
-}
-
-export function isUUID(typeRef: TypeReference) {
-  return typeof typeRef === 'string' && typeRef.length === 36
 }
 
 export function generateTypeName(str: string, index: number = 0): string {
@@ -139,51 +118,55 @@ export function generateTypeName(str: string, index: number = 0): string {
   return str.charAt(0).toUpperCase() + str.slice(1) + postFix
 }
 
-export function typesSummaryIterator(
-  typesSummary: TypesSummary,
-  callback: (ref: string, key: string) => void
-) {
+// export function isUUID(typeRef: TypeReference) {
+//   return typeof typeRef === 'string' && typeRef.length === 36
+// }
 
-  iterateTypesSummary(typesSummary, 'RootType')
+// export function typesSummaryIterator(
+//   typesSummary: TypesSummary,
+//   callback: (ref: string, key: string) => void
+// ) {
 
-  /**
-   * closure uses "callback" outside function scope for eadability purposes
-   */
-  function iterateTypesSummary( // 
-    { typeRef, types }: TypesSummary,
-    keyName: string
-  ) {
-    switch (getTypeGroup(typeRef)) {
+//   iterateTypesSummary(typesSummary, 'RootType')
 
-      case TypeGroup.Array:
-        typeRef = typeRef as string[]
+//   /**
+//    * closure uses "callback" outside function scope for eadability purposes
+//    */
+//   function iterateTypesSummary( // 
+//     { typeRef, types }: TypesSummary,
+//     keyName: string
+//   ) {
+//     switch (getTypeGroup(typeRef)) {
 
-        typeRef.forEach( (ref, i) => {
+//       case TypeGroup.Array:
+//         typeRef = typeRef as string[]
 
-          iterateTypesSummary(
-            { typeRef: ref, types },
-            keyName
-          )
-        })
-        break
+//         typeRef.forEach( (ref, i) => {
 
-      case TypeGroup.Primitive:
-        typeRef = typeRef as string
-        if (isUUID(typeRef)) {
+//           iterateTypesSummary(
+//             { typeRef: ref, types },
+//             keyName
+//           )
+//         })
+//         break
 
-          callback(typeRef, keyName)
+//       case TypeGroup.Primitive:
+//         typeRef = typeRef as string
+//         if (isUUID(typeRef)) {
 
-          const {typeObj} = types.find( _ => _.id === typeRef)
+//           callback(typeRef, keyName)
 
-          Object.entries(typeObj).forEach( ([key, value]) => {
-            iterateTypesSummary(
-              { typeRef: value, types },
-              key
-            )
-          })
-        }
-        break
+//           const {typeObj} = types.find( _ => _.id === typeRef)
 
-    }
-  }
-}
+//           Object.entries(typeObj).forEach( ([key, value]) => {
+//             iterateTypesSummary(
+//               { typeRef: value, types },
+//               key
+//             )
+//           })
+//         }
+//         break
+
+//     }
+//   }
+// }
