@@ -1,7 +1,9 @@
 import {
   TypeDescription,
   TypeGroup,
-  TypesSummary
+  TypeStructure,
+  NameEntry,
+  NameStructure
 } from './model'
 
 export function createTypeDescription (typeObj: any | string[]): TypeDescription {
@@ -118,55 +120,165 @@ export function generateTypeName(str: string, index: number = 0): string {
   return str.charAt(0).toUpperCase() + str.slice(1) + postFix
 }
 
-// export function isUUID(typeRef: TypeReference) {
-//   return typeof typeRef === 'string' && typeRef.length === 36
-// }
+export function createTypeObject(obj: any, types: TypeDescription[]): any {
+  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
+      const {rootTypeId} = getTypeStructure(value, types)
 
-// export function typesSummaryIterator(
-//   typesSummary: TypesSummary,
-//   callback: (ref: string, key: string) => void
-// ) {
+      return {
+        [key]: rootTypeId,
+        ...typeObj
+      }
+    },
+    {}
+  )
+}
 
-//   iterateTypesSummary(typesSummary, 'RootType')
+export function getTypeStructure(
+  targetObj: any, // object that we want to create types for
+  types: TypeDescription[] = [],
+): TypeStructure {
+  switch (getTypeGroup(targetObj)) {
 
-//   /**
-//    * closure uses "callback" outside function scope for eadability purposes
-//    */
-//   function iterateTypesSummary( // 
-//     { typeRef, types }: TypesSummary,
-//     keyName: string
-//   ) {
-//     switch (getTypeGroup(typeRef)) {
+    case TypeGroup.Array:
+      const typesOfArray = (<any[]>targetObj)
+      .map( _ => getTypeStructure(_, types).rootTypeId)
+      .filter( (id, i, arr) => arr.indexOf(id) === i)
 
-//       case TypeGroup.Array:
-//         typeRef = typeRef as string[]
+      const arrayType = getIdByType(typesOfArray, types)
 
-//         typeRef.forEach( (ref, i) => {
+      return {
+        rootTypeId: arrayType,
+        types
+      }
 
-//           iterateTypesSummary(
-//             { typeRef: ref, types },
-//             keyName
-//           )
-//         })
-//         break
+    case TypeGroup.Object:
+      const typeObj = createTypeObject(targetObj, types)
+      const objType = getIdByType(typeObj, types)
 
-//       case TypeGroup.Primitive:
-//         typeRef = typeRef as string
-//         if (isUUID(typeRef)) {
+      return {
+        rootTypeId: objType,
+        types
+      }
 
-//           callback(typeRef, keyName)
+    case TypeGroup.Primitive:
+      const simpleType = getSimpleTypeName(targetObj)
 
-//           const {typeObj} = types.find( _ => _.id === typeRef)
+      return {
+        rootTypeId: simpleType,
+        types
+      }
+  }
+}
 
-//           Object.entries(typeObj).forEach( ([key, value]) => {
-//             iterateTypesSummary(
-//               { typeRef: value, types },
-//               key
-//             )
-//           })
-//         }
-//         break
+export function isUUID(str: string) {
+  return str.length === 36
+}
 
-//     }
-//   }
-// }
+export function getTypeDescriptionGroup(desc: TypeDescription): TypeGroup {
+  if (desc === undefined) {
+    return TypeGroup.Primitive
+  } else if (desc.arrayOfTypes !== undefined) {
+    return TypeGroup.Array
+  } else {
+    return TypeGroup.Object
+  }
+}
+
+export function interfaceNameFromString(name: string) {
+  return name.charAt(0).toUpperCase() + name.slice(1)
+}
+
+export function getNameFromId (
+  id: string,
+  keyName: string,
+  types: TypeDescription[],
+  nameMap: {id: string, name: string}[]
+): string {
+  let nameEntry = nameMap.find(_ => _.id === id)
+
+  if (nameEntry) {
+    return nameEntry.name
+  }
+
+  const typeDesc = types.find(_ => _.id === id)
+  const group = getTypeDescriptionGroup(typeDesc)
+  let name
+
+  switch (group) {
+    case TypeGroup.Array:
+      // const typeName = interfaceNameFromString(keyName)
+
+      if (typeDesc.arrayOfTypes.length === 1) {
+        // if array consist of one type make this array type *singleType*[]
+
+        const [idOrPrimitive] = typeDesc.arrayOfTypes
+        let arrayType
+
+        if (isUUID(idOrPrimitive)) {
+          arrayType = getNameFromId(idOrPrimitive, 'this should never be seen', types, nameMap)
+        } else {
+          arrayType = idOrPrimitive
+        }
+
+        name = `${arrayType}[]`
+      } else {
+        name = 'any[]'
+      }
+
+      break
+    case TypeGroup.Object:
+      name = interfaceNameFromString(keyName)
+      break
+  }
+
+  nameMap.push({id, name})
+  return name
+}
+
+export function getName(
+  { rootTypeId, types }: TypeStructure,
+  keyName: string,
+  names: NameEntry[]
+): NameStructure {
+  const typeDesc = types.find(_ => _.id === rootTypeId)
+
+  switch (getTypeDescriptionGroup(typeDesc)) {
+
+    case TypeGroup.Array:
+      typeDesc.arrayOfTypes
+        .forEach((typeIdOrPrimitive, i) => {
+          return getName(
+            { rootTypeId: typeIdOrPrimitive, types },
+            // to differenttiate array types
+            `${keyName}${i === 0 ? '' : (i + 1)}`,
+            names
+          )
+        })
+      return {
+        rootName: getNameFromId(typeDesc.id, keyName, types, names),
+        names
+      }
+
+    case TypeGroup.Object:
+      Object.entries(typeDesc.typeObj)
+        .forEach( ([key, value]) => getName(
+          { rootTypeId: value, types },
+          key,
+          names
+        ))
+      return {
+        rootName: getNameFromId(typeDesc.id, keyName, types, names),
+        names
+      }
+
+    case TypeGroup.Primitive:
+      return {
+        rootName: rootTypeId,
+        names
+      }
+  }
+}
+
+export function getNameStructure(typeStructure: TypeStructure): NameStructure {
+  return getName(typeStructure, 'RootObject', [])
+}

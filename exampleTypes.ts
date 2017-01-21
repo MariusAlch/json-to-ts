@@ -4,7 +4,7 @@ const test1 = [
 ]
 
 const res1 = {
-  rootType: 'tipas1',
+  rootTypeId: 'tipas1',
   types: [
     {
       id: 'tipas1',
@@ -29,7 +29,7 @@ const test2 = [
 ]
 
 const res2 = {
-  rootType: 'tipas1',
+  rootTypeId: 'tipas1',
   types: [
     {
       id: 'tipas1',
@@ -62,7 +62,7 @@ const test3 = [
 ]
 
 const res3 = {
-  rootType: 'tipas1',
+  rootTypeId: 'tipas1',
   types: [
     {
       id: 'tipas1',
@@ -106,7 +106,7 @@ const test4 = [
 ]
 
 const res4 = {
-  rootType: 'tipas1',
+  rootTypeId: 'tipas1',
   types: [
     {
       id: 'tipas1',
@@ -150,7 +150,7 @@ const test5 = [
 ]
 
 const res5 = {
-  rootType: 'tipas1',
+  rootTypeId: 'tipas1',
   types: [
     {
       id: 'tipas1',

@@ -2,13 +2,18 @@ import {
   getTypeGroup,
   prettyPrint,
   getIdByType,
-  getSimpleTypeName
+  getSimpleTypeName,
+  getTypeStructure,
+  isUUID,
+  getNameStructure
 } from './lib'
 
 import {
   TypeDescription,
   TypeGroup,
-  TypesSummary,
+  TypeStructure,
+  NameEntry,
+  NameStructure
 } from './model'
 
 const test1 = {
@@ -39,54 +44,10 @@ const test2 = [
   {b: 2},
 ]
 
-export function createTypeObject(obj: any, types: TypeDescription[]): any {
-  return Object.entries(obj).reduce( (typeObj, [key, value]) => {
-      const {rootType} = getTypeInfo(value, types)
 
-      return {
-        [key]: rootType,
-        ...typeObj
-      }
-    },
-    {}
-  )
-}
+const typeStructure = getTypeStructure(test2)
+prettyPrint(typeStructure)
+const {rootName, names} = getNameStructure(typeStructure)
+prettyPrint(names)
 
-export function getTypeInfo(
-  targetObj: any, // object that we want to create types for
-  types: TypeDescription[] = [],
-): TypesSummary {
-  switch (getTypeGroup(targetObj)) {
 
-    case TypeGroup.Array:
-      const typesOfArray = (<any[]>targetObj)
-      .map( _ => getTypeInfo(_, types).rootType)
-      .filter( (id, i, arr) => arr.indexOf(id) === i)
-
-      const arrayType = getIdByType(typesOfArray, types)
-
-      return {
-        rootType: arrayType,
-        types
-      }
-
-    case TypeGroup.Object:
-      const typeObj = createTypeObject(targetObj, types)
-      const objType = getIdByType(typeObj, types)
-
-      return {
-        rootType: objType,
-        types
-      }
-
-    case TypeGroup.Primitive:
-      const simpleType = getSimpleTypeName(targetObj)
-
-      return {
-        rootType: simpleType,
-        types
-      }
-  }
-}
-
-prettyPrint(getTypeInfo(test1))
