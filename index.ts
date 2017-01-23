@@ -5,8 +5,10 @@ import {
   getSimpleTypeName,
   getTypeStructure,
   isUUID,
-  getNameStructure
+  getNames,
+  getTypeDescriptionGroup
 } from './lib'
+
 
 import {
   TypeDescription,
@@ -44,10 +46,120 @@ const test2 = [
   {b: 2},
 ]
 
+const test3 = {
+  name: null
+}
 
-const typeStructure = getTypeStructure(test2)
+const typeStructure = getTypeStructure(test1)
 prettyPrint(typeStructure)
-const {rootName, names} = getNameStructure(typeStructure)
+const names = getNames(typeStructure)
 prettyPrint(names)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+interface InterfaceDescription {
+  name: string
+  typeBlock: Object
+}
+
+function findNameById (
+  id: string,
+  names: NameEntry[]
+): string {
+  return names.find(_ => _.id === id).name
+}
+
+function replaceTypeObjIdsWithNames (typeObj: Object, names: NameEntry[]): Object {
+    return Object.entries(typeObj)
+      .map(([key, value]) => {
+        if (isUUID(value)) { // is it ID (we only need to replace ids not primitive types) 
+          const name = findNameById(value, names)
+          return [key, name]
+        } else {
+          const name = value === 'null' ? 'any' : value
+          return [key, name]
+        }
+      })
+      .reduce(
+        (agg, [key, value]) => {
+          agg[key] = value
+          return agg
+        },
+        {}
+      )
+}
+
+function getInterfaceDescriptions(
+  typeStructure: TypeStructure,
+  names: NameEntry[]
+): InterfaceDescription[] {
+
+  return names
+    .map(({id, name}) => {
+      const typeDescription = typeStructure.types.find( type => type.id === id)
+
+      if (typeDescription.typeObj) {
+        const typeBlock = replaceTypeObjIdsWithNames(typeDescription.typeObj, names)
+        return {name, typeBlock}
+      } else {
+        return null
+      }
+
+    })
+    .filter(_ => _ !== null)
+
+}
+
+
+const interfaceDescriptions = getInterfaceDescriptions(typeStructure, names)
+
+function getInterfaceStringFromDescription({name, typeBlock}: InterfaceDescription): string {
+
+  const stringTypeMap = Object.entries(typeBlock)
+    .map(([key, name]) => `  ${key}: ${name}\n`)
+    .reduce( (a, b) => a += b)
+
+  let interfaceString = ''
+
+  interfaceString += `interface ${name} {\n`
+  interfaceString +=  stringTypeMap
+  interfaceString += '}'
+
+  return interfaceString
+}
+
+interfaceDescriptions.forEach(_ => {
+  const interfaceString = getInterfaceStringFromDescription(_)
+  console.log(interfaceString + '\n')
+})

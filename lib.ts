@@ -6,6 +6,8 @@ import {
   NameStructure
 } from './model'
 
+import * as pluralize from 'pluralize'
+
 export function createTypeDescription (typeObj: any | string[]): TypeDescription {
   if (isArray(typeObj)) {
     return {
@@ -57,11 +59,7 @@ export function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: Ty
 function arraysContainSameElements(arr1: any[], arr2: any[]): boolean {
   if (arr1 === undefined || arr2 === undefined) return false
 
-  const filteredArray = arr1.filter( value => {
-      return arr2.indexOf(value) > -1
-  })
-
-  return filteredArray.length === arr1.length
+  return arr1.sort().join('') === arr2.sort().join('')
 }
 
 function objectsHaveSameEntries(obj1: any, obj2: any): boolean {
@@ -141,8 +139,8 @@ export function getTypeStructure(
 
     case TypeGroup.Array:
       const typesOfArray = (<any[]>targetObj)
-      .map( _ => getTypeStructure(_, types).rootTypeId)
-      .filter( (id, i, arr) => arr.indexOf(id) === i)
+        .map( _ => getTypeStructure(_, types).rootTypeId)
+        .filter( (id, i, arr) => arr.indexOf(id) === i)
 
       const arrayType = getIdByType(typesOfArray, types)
 
@@ -188,7 +186,7 @@ export function interfaceNameFromString(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
-export function getNameFromId (
+export function getNameById (
   id: string,
   keyName: string,
   types: TypeDescription[],
@@ -210,12 +208,11 @@ export function getNameFromId (
 
       if (typeDesc.arrayOfTypes.length === 1) {
         // if array consist of one type make this array type *singleType*[]
-
         const [idOrPrimitive] = typeDesc.arrayOfTypes
         let arrayType
 
         if (isUUID(idOrPrimitive)) {
-          arrayType = getNameFromId(idOrPrimitive, 'this should never be seen', types, nameMap)
+          arrayType = getNameById(idOrPrimitive, 'this should never be seen', types, nameMap)
         } else {
           arrayType = idOrPrimitive
         }
@@ -226,9 +223,12 @@ export function getNameFromId (
       }
 
       break
+
     case TypeGroup.Object:
-      name = interfaceNameFromString(keyName)
+      const singularForm = pluralize.singular(keyName)
+      name = interfaceNameFromString(singularForm)
       break
+
   }
 
   nameMap.push({id, name})
@@ -255,7 +255,7 @@ export function getName(
           )
         })
       return {
-        rootName: getNameFromId(typeDesc.id, keyName, types, names),
+        rootName: getNameById(typeDesc.id, keyName, types, names),
         names
       }
 
@@ -267,11 +267,12 @@ export function getName(
           names
         ))
       return {
-        rootName: getNameFromId(typeDesc.id, keyName, types, names),
+        rootName: getNameById(typeDesc.id, keyName, types, names),
         names
       }
 
     case TypeGroup.Primitive:
+      // in this case rootTypeId is primitive type string (string, null, number, boolean)
       return {
         rootName: rootTypeId,
         names
@@ -279,6 +280,6 @@ export function getName(
   }
 }
 
-export function getNameStructure(typeStructure: TypeStructure): NameStructure {
-  return getName(typeStructure, 'RootObject', [])
+export function getNames(typeStructure: TypeStructure): NameEntry[] {
+  return getName(typeStructure, 'RootObject', []).names.reverse()
 }
