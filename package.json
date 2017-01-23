@@ -1,12 +1,14 @@
-
 {
-    "name": "jsontotypes",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-        "start": "nodemon --watch '**/*.ts' --exec 'ts-node' index.ts"
-    },
-    "author": "",
-    "license": "ISC"
+  "name": "jsontotypes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --watch '**/*.ts' --exec 'ts-node' index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pluralize": "^3.1.0"
+  }
 }
