@@ -55,42 +55,9 @@ prettyPrint(typeStructure)
 const names = getNames(typeStructure)
 prettyPrint(names)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 interface InterfaceDescription {
   name: string
-  typeBlock: Object
+  typeBlock: object
 }
 
 function findNameById (
@@ -103,12 +70,14 @@ function findNameById (
 function replaceTypeObjIdsWithNames (typeObj: Object, names: NameEntry[]): Object {
     return Object.entries(typeObj)
       .map(([key, value]) => {
-        if (isUUID(value)) { // is it ID (we only need to replace ids not primitive types) 
+        if (isUUID(value)) { // we only need to replace ids not primitive types
           const name = findNameById(value, names)
           return [key, name]
         } else {
-          const name = value === 'null' ? 'any' : value
-          return [key, name]
+          const entry = value === 'null' ?
+                     [`${key}?`, 'any'] :
+                     [   key   , value]
+          return entry
         }
       })
       .reduce(
@@ -138,7 +107,6 @@ function getInterfaceDescriptions(
 
     })
     .filter(_ => _ !== null)
-
 }
 
 
@@ -150,11 +118,10 @@ function getInterfaceStringFromDescription({name, typeBlock}: InterfaceDescripti
     .map(([key, name]) => `  ${key}: ${name}\n`)
     .reduce( (a, b) => a += b)
 
-  let interfaceString = ''
+  let interfaceString =  `interface ${name} {\n`
+      interfaceString +=  stringTypeMap
+      interfaceString += '}'
 
-  interfaceString += `interface ${name} {\n`
-  interfaceString +=  stringTypeMap
-  interfaceString += '}'
 
   return interfaceString
 }
