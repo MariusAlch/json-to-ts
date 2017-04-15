@@ -4,12 +4,20 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon --exec 'ts-node' src/index.ts"
+    "build": "rm -rf ./build && tsc",
+    "start": "nodemon -e ts -w src -x 'ts-node' src/index.ts",
+    "test": "npm run build && mocha ./build/test",
+    "test-reload": "nodemon -e ts -w test -x 'npm test'"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^7.0.12",
     "@types/pluralize": "^0.0.27",
+    "mocha": "^3.2.0",
     "pluralize": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "2.2.40"
   }
 }

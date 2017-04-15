@@ -35,29 +35,17 @@ const test1 = {
       { species: 'rabbit' },
       { species: 'fox' }
     ],
-    humans: [],
+    humans: [{
+      kas: 'tas'
+    }],
     officer: null
   },
   name: 'beauty-forest'
 }
 
-const test2 = [
-  {a: 1},
-  {b: 2},
-]
-
-const test3 = {
-  name: null
-}
-
-const typeStructure = getTypeStructure(test1)
-prettyPrint(typeStructure)
-const names = getNames(typeStructure)
-prettyPrint(names)
-
 interface InterfaceDescription {
   name: string
-  typeBlock: object
+  typeMap: object
 }
 
 function findNameById (
@@ -99,8 +87,8 @@ function getInterfaceDescriptions(
       const typeDescription = typeStructure.types.find( type => type.id === id)
 
       if (typeDescription.typeObj) {
-        const typeBlock = replaceTypeObjIdsWithNames(typeDescription.typeObj, names)
-        return {name, typeBlock}
+        const typeMap = replaceTypeObjIdsWithNames(typeDescription.typeObj, names)
+        return {name, typeMap}
       } else {
         return null
       }
@@ -109,14 +97,14 @@ function getInterfaceDescriptions(
     .filter(_ => _ !== null)
 }
 
+function getInterfaceStringFromDescription({name, typeMap}: InterfaceDescription): string {
 
-const interfaceDescriptions = getInterfaceDescriptions(typeStructure, names)
-
-function getInterfaceStringFromDescription({name, typeBlock}: InterfaceDescription): string {
-
-  const stringTypeMap = Object.entries(typeBlock)
-    .map(([key, name]) => `  ${key}: ${name}\n`)
-    .reduce( (a, b) => a += b)
+  const stringTypeMap = Object.entries(typeMap)
+    .map(([key, name]) => `  ${key}: ${name};\n`)
+    .reduce(
+      (a, b) => a += b,
+      ''
+    )
 
   let interfaceString =  `interface ${name} {\n`
       interfaceString +=  stringTypeMap
@@ -126,7 +114,18 @@ function getInterfaceStringFromDescription({name, typeBlock}: InterfaceDescripti
   return interfaceString
 }
 
-interfaceDescriptions.forEach(_ => {
-  const interfaceString = getInterfaceStringFromDescription(_)
-  console.log(interfaceString + '\n')
-})
+export function jsonToTypescriptInterfaces(json: any): string[] {
+  const typeStructure = getTypeStructure(json)
+  // prettyPrint(typeStructure)
+  const names = getNames(typeStructure)
+  // prettyPrint(names)
+
+  return getInterfaceDescriptions(typeStructure, names)
+    .map(typeDesciprtion => {
+      return getInterfaceStringFromDescription(typeDesciprtion)
+    })
+}
+
+// jsonToTypescriptInterfaces(test1).forEach(_ => {
+//   console.log(`${_}\n`)
+// })

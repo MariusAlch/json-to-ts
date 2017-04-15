@@ -123,8 +123,8 @@ export function createTypeObject(obj: any, types: TypeDescription[]): any {
       const {rootTypeId} = getTypeStructure(value, types)
 
       return {
+        ...typeObj,
         [key]: rootTypeId,
-        ...typeObj
       }
     },
     {}
@@ -204,7 +204,6 @@ export function getNameById (
 
   switch (group) {
     case TypeGroup.Array:
-      // const typeName = interfaceNameFromString(keyName)
 
       if (typeDesc.arrayOfTypes.length === 1) {
         // if array consist of one type make this array type *singleType*[]
@@ -213,6 +212,7 @@ export function getNameById (
 
         if (isUUID(idOrPrimitive)) {
           arrayType = getNameById(idOrPrimitive, 'this should never be seen', types, nameMap)
+          arrayType = pluralize.singular(arrayType)
         } else {
           arrayType = idOrPrimitive
         }
