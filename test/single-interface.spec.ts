@@ -16,6 +16,38 @@ describe('Single interface', function () {
     assert.strictEqual(a, b)
   })
 
+  it('should work with multiple key words', function() {
+    const json = {
+      'hello world': 42
+    }
+
+    const expected = `
+interface RootObject {
+  'hello world': number;
+}`
+    const actual = jsonToTypescript(json).pop()
+    assert.strictEqual(
+      expected.trim(),
+      actual.trim()
+    )
+  })
+
+  it('should work with multiple key words and optional fields', function() {
+    const json = {
+      'hello world': null
+    }
+
+    const expected = `
+interface RootObject {
+  'hello world'?: any;
+}`
+    const actual = jsonToTypescript(json).pop()
+    assert.strictEqual(
+      expected.trim(),
+      actual.trim()
+    )
+  })
+
   it('should work with primitive types', function() {
     const json = {
       str: 'this is string',

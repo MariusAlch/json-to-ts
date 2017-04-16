@@ -321,8 +321,8 @@ function getName(
   }
 }
 
-export function getNames(typeStructure: TypeStructure): NameEntry[] {
-  return getName(typeStructure, 'RootObject', [], false).names.reverse()
+export function getNames(typeStructure: TypeStructure, rootName: string = 'RootObject'): NameEntry[] {
+  return getName(typeStructure, rootName, [], false).names.reverse()
 }
 
 function findNameById (
@@ -334,14 +334,21 @@ function findNameById (
 
 function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): object {
     return Object.entries(typeObj)
-      .map(([key, value]) => {
-        if (isUUID(value)) { // we only need to replace ids not primitive types
-          const name = findNameById(value, names)
+      .map(([key, type]) => {
+        const keyWordCount = key.split(' ').length
+
+        return keyWordCount > 1 ?
+            [`'${key}'`, type] :
+            [key, type]
+      })
+      .map(([key, type]) => {
+        if (isUUID(type)) { // we only need to replace ids not primitive types
+          const name = findNameById(type, names)
           return [key, name]
         } else {
-          const entry = value === 'null' ?
+          const entry = type === 'null' ?
                      [`${key}?`, 'any'] :
-                     [   key   , value]
+                     [   key   , type]
           return entry
         }
       })

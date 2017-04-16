@@ -27,3 +27,7 @@ export interface InterfaceDescription {
   name: string
   typeMap: object
 }
+
+export interface Options {
+  rootName: string
+}

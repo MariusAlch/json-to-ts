@@ -6,8 +6,17 @@ import {
   getInterfaceStringFromDescription,
   optimizeTypeStructure
 } from './lib'
+import { Options } from './model';
 
-export default function jsonToTypescript(json: any): string[] {
+export default function jsonToTypescript(json: any, userOptions?: Options): string[] {
+  const defaultOptions: Options = {
+    rootName: 'RootObject'
+  }
+  const options = {
+    ...defaultOptions,
+    ...userOptions
+  }
+
   /**
    * Parsing currently works with JSON object not arrays and primitive types
    * so we shall validate, so we dont start parsing non Object type
@@ -23,7 +32,7 @@ export default function jsonToTypescript(json: any): string[] {
    * so delete them here
    */
   optimizeTypeStructure(typeStructure)
-  const names = getNames(typeStructure)
+  const names = getNames(typeStructure, options.rootName)
 
   return getInterfaceDescriptions(typeStructure, names)
     .map(getInterfaceStringFromDescription)
