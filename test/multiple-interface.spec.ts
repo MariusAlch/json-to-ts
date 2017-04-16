@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { removeWhiteSpace } from './util/index'
-import { jsonToTypescript } from '../src/index'
+import jsonToTypescript from '../src/index'
 
 describe('Multiple interfaces', function () {
 

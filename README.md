@@ -7,7 +7,7 @@
 ### Code
 
 ```javascript
-import { jsonToTypescript } from 'json-to-typescript'
+const jsonToTypescript = require('json-to-typescript')
 
 const json = {
   cats: [
