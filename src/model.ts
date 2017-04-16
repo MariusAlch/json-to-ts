@@ -22,3 +22,8 @@ export interface NameStructure {
   rootName: string
   names: NameEntry[]
 }
+
+export interface InterfaceDescription {
+  name: string
+  typeMap: object
+}

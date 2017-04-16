@@ -4,7 +4,7 @@ import { jsonToTypescriptInterfaces } from '../src/index'
 
 describe('Single interface', function () {
 
-  it('Should work with empty objects', function() {
+  it('should work with empty objects', function() {
     const json = {}
 
     const expected = `
@@ -16,7 +16,7 @@ describe('Single interface', function () {
     assert.strictEqual(a, b)
   })
 
-  it('Should work with primitive types', function() {
+  it('should work with primitive types', function() {
     const json = {
       str: 'this is string',
       num: 42,
@@ -35,7 +35,7 @@ describe('Single interface', function () {
     assert.strictEqual(expect, actual)
   })
 
-  it('Should keep field order', function() {
+  it('should keep field order', function() {
     const json = {
       c: 'this is string',
       a: 42,
@@ -54,7 +54,7 @@ describe('Single interface', function () {
     assert.strictEqual(expect, actual)
   })
 
-  it('Should add optional field modifier on null values', function() {
+  it('should add optional field modifier on null values', function() {
     const json = {
       field: null
     }
@@ -69,38 +69,17 @@ describe('Single interface', function () {
     assert.strictEqual(a, b)
   })
 
-  it('Should work with primitive json', function() {
-    // TODO: just number, string, boolean
+  it('should name root object interface "RootObject"', function() {
+    const json = {
+    }
 
-    // const json = {
-    //   field: null
-    // }
-
-    // const expected = `
-    //   interface RootObject {
-    //     field?: any;
-    //   }
-    // `
-    // const actual = jsonToTypescriptInterfaces(json).pop()
-    // const [a, b] = [expected, actual].map(removeWhiteSpace)
-    // assert.strictEqual(a, b)
-  })
-
-  it('Should work with array json', function() {
-    // TODO
-
-    // const json = {
-    //   field: null
-    // }
-
-    // const expected = `
-    //   interface RootObject {
-    //     field?: any;
-    //   }
-    // `
-    // const actual = jsonToTypescriptInterfaces(json).pop()
-    // const [a, b] = [expected, actual].map(removeWhiteSpace)
-    // assert.strictEqual(a, b)
+    const expected = `
+      interface RootObject {
+      }
+    `
+    const actual = jsonToTypescriptInterfaces(json).pop()
+    const [a, b] = [expected, actual].map(removeWhiteSpace)
+    assert.strictEqual(a, b)
   })
 
 })
