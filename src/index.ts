@@ -3,7 +3,8 @@ import {
   getTypeStructure,
   getNames,
   getInterfaceDescriptions,
-  getInterfaceStringFromDescription
+  getInterfaceStringFromDescription,
+  optimizeTypeStructure
 } from './lib'
 
 export default function jsonToTypescript(json: any): string[] {
@@ -16,10 +17,17 @@ export default function jsonToTypescript(json: any): string[] {
   }
 
   const typeStructure = getTypeStructure(json)
+  /**
+   * TO CHANGE IN THE FUTURE
+   * due to optimizations some types are will be left unused
+   * so delete them here
+   */
+  optimizeTypeStructure(typeStructure)
   const names = getNames(typeStructure)
 
   return getInterfaceDescriptions(typeStructure, names)
     .map(getInterfaceStringFromDescription)
 }
 
-module.exports = jsonToTypescript
+(<any>jsonToTypescript).default = jsonToTypescript
+module.exports = jsonToTypescript;

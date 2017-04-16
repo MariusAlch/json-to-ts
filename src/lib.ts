@@ -9,6 +9,9 @@ import {
 
 import * as pluralize from 'pluralize'
 
+function onlyUnique(value, index, self) {
+    return self.indexOf(value) === index
+}
 
 function createTypeDescription (typeObj: any | string[]): TypeDescription {
   if (isArray(typeObj)) {
@@ -108,11 +111,6 @@ function getTypeGroup(value: any): TypeGroup {
   } else {
     return TypeGroup.Primitive
   }
-}
-function prettyPrint(json) {
-  console.log(
-    JSON.stringify(json, null, 4)
-  )
 }
 
 function generateTypeName(str: string, index: number = 0): string {
@@ -251,6 +249,30 @@ function uniqueByIncrement (name: string, names: string[]): string {
   }
 }
 
+function proposeRemoveTypes (typesToDelete: string[], typeDescriptions: TypeDescription[]) {
+  typesToDelete.forEach(type => {
+    const idsOfAllTypes = typeDescriptions
+      .map(desc => {
+        switch (getTypeDescriptionGroup(desc)) {
+          case TypeGroup.Object:
+            return Object.values(desc.typeObj).filter(isUUID)
+          case TypeGroup.Array:
+            return desc.arrayOfTypes
+        }
+      })
+      .reduce(
+        (acc, arr) => [...acc, ...arr],
+        []
+      )
+
+    const shouldDelete = idsOfAllTypes.filter(_ => _ === type).length === 1
+    if (shouldDelete) {
+      const i = typeDescriptions.findIndex(desc => desc.id === type)
+      typeDescriptions.splice(i, 1)
+    }
+  })
+}
+
 function getName(
   { rootTypeId, types }: TypeStructure,
   keyName: string,
@@ -267,7 +289,7 @@ function getName(
           return getName(
             { rootTypeId: typeIdOrPrimitive, types },
             // to differenttiate array types
-            `${keyName}${i === 0 ? '' : (i + 1)}`,
+            i === 0 ? keyName : `${keyName}${i + 1}`,
             names,
             true
           )
@@ -366,4 +388,31 @@ export function getInterfaceStringFromDescription({name, typeMap}: InterfaceDesc
       interfaceString += '}'
 
   return interfaceString
+}
+
+export function optimizeTypeStructure ({rootTypeId, types}: TypeStructure) {
+  iterateRec(rootTypeId)
+
+  function iterateRec (typeId)  {
+    const typeDesc = types.find(_ => _.id === typeId)
+
+    switch (getTypeDescriptionGroup(typeDesc)) {
+      case TypeGroup.Object:
+        Object.values(typeDesc.typeObj)
+          .filter(isUUID)
+          .forEach(iterateRec)
+        break
+
+      case TypeGroup.Array:
+        typeDesc.arrayOfTypes
+          .filter(isUUID)
+          .forEach(iterateRec)
+
+        if (typeDesc.arrayOfTypes.length > 1) {
+          proposeRemoveTypes(typeDesc.arrayOfTypes, types)
+        }
+      break
+
+    }
+  }
 }

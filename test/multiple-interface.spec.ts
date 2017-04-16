@@ -90,6 +90,59 @@ describe('Multiple interfaces', function () {
     })
   })
 
+  it('should support multi nested arrays', function() {
+    const json = {
+      cats: [
+        [
+          {name: 'Kittin'},
+          {name: 'Kittin'},
+          {name: 'Kittin'},
+        ],
+        [
+          {name: 'Kittin'},
+          {name: 'Kittin'},
+          {name: 'Kittin'},
+        ],
+      ]
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        cats: Cat[][];
+      }`,
+      `interface Cat {
+        name: string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    jsonToTypescript(json)
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+  })
+
+  it('should resolve "any" type to arrays containing different types', function() {
+    const json = {
+      cats: [
+        {name: 'Kittin'},
+        {label: 'Kittin'}
+      ]
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        cats: any[];
+      }`,
+    ].map(removeWhiteSpace)
+
+    jsonToTypescript(json)
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+  })
+
   it('should singularize array types (dogs: [...] => dogs: Dog[] )', function() {
     const json = {
       dogs: [
@@ -157,7 +210,7 @@ describe('Multiple interfaces', function () {
     })
   })
 
-  it('unique names increment start with 2', function() {
+  it('should start unique names increment with 2', function() {
     const json = {
       a: {
         human: {legs : 4}
