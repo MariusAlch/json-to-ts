@@ -1,15 +1,31 @@
 {
-  "name": "jsontotypes",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "json-to-typescript",
+  "version": "0.1.0",
+  "description": "convert json object to typescript interfaces",
+  "keywords": [
+    "typescript",
+    "convert",
+    "json",
+    "util",
+    "lib",
+    "types"
+  ],
+  "main": "build/src/index.js",
   "scripts": {
+    "prepublish": "npm run build",
     "build": "rm -rf ./build && tsc",
     "start": "nodemon -e ts -w src -x 'ts-node' src/index.ts",
     "test": "npm run build && mocha ./build/test",
     "test-reload": "nodemon -e ts -w test -w src -x 'npm test'"
   },
-  "author": "",
+  "author": "https://github.com/mariusalch",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/MariusAlch/json-to-typescript.git"
+  },
+  "bugs": {
+      "url": "https://github.com/MariusAlch/json-to-typescript/issues"
+  },
   "license": "ISC",
   "dependencies": {
     "@types/node": "^7.0.12",
