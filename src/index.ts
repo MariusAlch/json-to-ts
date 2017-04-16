@@ -8,7 +8,7 @@ import {
 } from './lib'
 import { Options } from './model';
 
-export default function jsonToTypescript(json: any, userOptions?: Options): string[] {
+export default function JsonToTS(json: any, userOptions?: Options): string[] {
   const defaultOptions: Options = {
     rootName: 'RootObject'
   }
@@ -38,5 +38,5 @@ export default function jsonToTypescript(json: any, userOptions?: Options): stri
     .map(getInterfaceStringFromDescription)
 }
 
-(<any>jsonToTypescript).default = jsonToTypescript
-module.exports = jsonToTypescript;
+(<any>JsonToTS).default = JsonToTS
+module.exports = JsonToTS;

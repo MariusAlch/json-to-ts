@@ -3,7 +3,7 @@ const assert = require('assert')
 describe("Javascript integration", function () {
 
   it("should work with default require statement", function () {
-    const jsonToTypescript = require('../../build/src/index')
+    const JsonToTS = require('../../build/src/index')
 
     const expected = `
 interface RootObject {
@@ -24,7 +24,7 @@ interface Cat {
       favoriteWord: 'Hello'
     }
 
-    const output = jsonToTypescript(json)
+    const output = JsonToTS(json)
       .reduce((type1, type2) => {
         return `${type1}\n${type2}`
       })

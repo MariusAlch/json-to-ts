@@ -1,9 +1,10 @@
 {
-  "name": "json-to-typescript",
+  "name": "json-to-ts",
   "version": "0.1.0",
-  "description": "convert json object to typescript interfaces",
+  "description": "Convert json object to typescript interfaces",
   "keywords": [
     "typescript",
+    "ts",
     "convert",
     "json",
     "util",
@@ -21,10 +22,10 @@
   "author": "https://github.com/mariusalch",
   "repository": {
       "type": "git",
-      "url": "https://github.com/MariusAlch/json-to-typescript.git"
+      "url": "https://github.com/MariusAlch/json-to-ts.git"
   },
   "bugs": {
-      "url": "https://github.com/MariusAlch/json-to-typescript/issues"
+      "url": "https://github.com/MariusAlch/json-to-ts/issues"
   },
   "license": "ISC",
   "dependencies": {

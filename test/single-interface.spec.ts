@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { removeWhiteSpace } from './util/index'
-import jsonToTypescript from '../src/index'
+import JsonToTS from '../src/index'
 
 describe('Single interface', function () {
 
@@ -11,7 +11,7 @@ describe('Single interface', function () {
       interface RootObject {
       }
     `
-    const actual = jsonToTypescript(json).pop()
+    const actual = JsonToTS(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })
@@ -25,7 +25,7 @@ describe('Single interface', function () {
 interface RootObject {
   'hello world': number;
 }`
-    const actual = jsonToTypescript(json).pop()
+    const actual = JsonToTS(json).pop()
     assert.strictEqual(
       expected.trim(),
       actual.trim()
@@ -41,7 +41,7 @@ interface RootObject {
 interface RootObject {
   'hello world'?: any;
 }`
-    const actual = jsonToTypescript(json).pop()
+    const actual = JsonToTS(json).pop()
     assert.strictEqual(
       expected.trim(),
       actual.trim()
@@ -62,7 +62,7 @@ interface RootObject {
         bool: boolean;
       }
     `
-    const interfaceStr = jsonToTypescript(json).pop()
+    const interfaceStr = JsonToTS(json).pop()
     const [expect, actual] = [expected, interfaceStr].map(removeWhiteSpace)
     assert.strictEqual(expect, actual)
   })
@@ -81,7 +81,7 @@ interface RootObject {
         b: boolean;
       }
     `
-    const interfaceStr = jsonToTypescript(json).pop()
+    const interfaceStr = JsonToTS(json).pop()
     const [expect, actual] = [expected, interfaceStr].map(removeWhiteSpace)
     assert.strictEqual(expect, actual)
   })
@@ -96,7 +96,7 @@ interface RootObject {
         field?: any;
       }
     `
-    const actual = jsonToTypescript(json).pop()
+    const actual = JsonToTS(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })
@@ -109,7 +109,7 @@ interface RootObject {
       interface RootObject {
       }
     `
-    const actual = jsonToTypescript(json).pop()
+    const actual = JsonToTS(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })

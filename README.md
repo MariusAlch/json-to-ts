@@ -1,4 +1,4 @@
-# Json to Typescript
+# Json to TS
 
 ### Convert json object to typescript interfaces
 
@@ -7,7 +7,7 @@
 ### Code
 
 ```javascript
-const jsonToTypescript = require('json-to-typescript')
+const JsonToTS = require('json-to-ts')
 
 const json = {
   cats: [
@@ -18,7 +18,7 @@ const json = {
   favoriteWord: 'Hello'
 }
 
-jsonToTypescript(json).forEach( typeInterface => {
+JsonToTS(json).forEach( typeInterface => {
   console.log(typeInterface)
 })
 ```
@@ -39,5 +39,5 @@ interface Cat {
 # Setup
 
 ```sh
-$ npm install --save json-to-typescript
+$ npm install --save json-to-ts
 ```
