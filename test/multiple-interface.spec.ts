@@ -56,6 +56,28 @@ describe('Multiple interfaces', function () {
     assert(interfaces.length === 2)
   })
 
+  it('should have multi keyword interfaces created without space', function() {
+    const json = {
+      'hello world': {
+        b: 42
+      }
+    }
+
+    const expectedTypes = [
+`interface RootObject {
+  'hello world': HelloWorld;
+}`,
+`interface HelloWorld {
+  b: number;
+}`,
+    ].map(_ => _.trim())
+
+    const interfaces = JsonToTS(json)
+    interfaces.forEach( typeInterface => {
+      assert(expectedTypes.includes(typeInterface))
+    })
+  })
+
   it('should have unique names for nested objects since they ', function() {
     const json = {
       name: 'Larry',

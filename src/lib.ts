@@ -13,6 +13,14 @@ function onlyUnique(value, index, self) {
     return self.indexOf(value) === index
 }
 
+function pascalCase (name: string) {
+  return name
+    .split(/\s+/g)
+    .filter(_ => _ !== '')
+    .map(capitalize)
+    .reduce((a, b) => a + b)
+}
+
 function createTypeDescription (typeObj: any | string[]): TypeDescription {
   if (isArray(typeObj)) {
     return {
@@ -229,7 +237,7 @@ function getNameById (
        */
       name = [keyName]
         .map(name => isInsideArray ? pluralize.singular(name) : name)
-        .map(capitalize)
+        .map(pascalCase)
         .map(name => uniqueByIncrement(name, nameMap.map(({name}) => name )))
         .pop()
       break
