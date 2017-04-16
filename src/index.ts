@@ -6,7 +6,7 @@ import {
   getInterfaceStringFromDescription
 } from './lib'
 
-export function jsonToTypescriptInterfaces(json: any): string[] {
+export function jsonToTypescript(json: any): string[] {
   /**
    * Parsing currently works with JSON object not arrays and primitive types
    * so we shall validate, so we dont start parsing non Object type

@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { removeWhiteSpace } from './util/index'
-import { jsonToTypescriptInterfaces } from '../src/index'
+import { jsonToTypescript } from '../src/index'
 
 describe('Multiple interfaces', function () {
 
@@ -20,7 +20,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    jsonToTypescriptInterfaces(json)
+    jsonToTypescript(json)
       .forEach( i => {
         const noWhiteSpaceInterface = removeWhiteSpace(i)
         assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -47,7 +47,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -83,7 +83,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -107,7 +107,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -130,7 +130,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -150,7 +150,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))
@@ -186,7 +186,7 @@ describe('Multiple interfaces', function () {
       }`,
     ].map(removeWhiteSpace)
 
-    const interfaces = jsonToTypescriptInterfaces(json)
+    const interfaces = jsonToTypescript(json)
     interfaces.forEach( i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i)
       assert(expectedTypes.includes(noWhiteSpaceInterface))

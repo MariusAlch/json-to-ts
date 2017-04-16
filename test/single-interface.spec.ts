@@ -1,6 +1,6 @@
 import * as assert from 'assert'
 import { removeWhiteSpace } from './util/index'
-import { jsonToTypescriptInterfaces } from '../src/index'
+import { jsonToTypescript } from '../src/index'
 
 describe('Single interface', function () {
 
@@ -11,7 +11,7 @@ describe('Single interface', function () {
       interface RootObject {
       }
     `
-    const actual = jsonToTypescriptInterfaces(json).pop()
+    const actual = jsonToTypescript(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })
@@ -30,7 +30,7 @@ describe('Single interface', function () {
         bool: boolean;
       }
     `
-    const interfaceStr = jsonToTypescriptInterfaces(json).pop()
+    const interfaceStr = jsonToTypescript(json).pop()
     const [expect, actual] = [expected, interfaceStr].map(removeWhiteSpace)
     assert.strictEqual(expect, actual)
   })
@@ -49,7 +49,7 @@ describe('Single interface', function () {
         b: boolean;
       }
     `
-    const interfaceStr = jsonToTypescriptInterfaces(json).pop()
+    const interfaceStr = jsonToTypescript(json).pop()
     const [expect, actual] = [expected, interfaceStr].map(removeWhiteSpace)
     assert.strictEqual(expect, actual)
   })
@@ -64,7 +64,7 @@ describe('Single interface', function () {
         field?: any;
       }
     `
-    const actual = jsonToTypescriptInterfaces(json).pop()
+    const actual = jsonToTypescript(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })
@@ -77,7 +77,7 @@ describe('Single interface', function () {
       interface RootObject {
       }
     `
-    const actual = jsonToTypescriptInterfaces(json).pop()
+    const actual = jsonToTypescript(json).pop()
     const [a, b] = [expected, actual].map(removeWhiteSpace)
     assert.strictEqual(a, b)
   })
