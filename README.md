@@ -1,3 +1,5 @@
+![From clipboard](https://image.ibb.co/fTb60k/icon.png)
+
 # Json to TS
 
 ### Convert json object to typescript interfaces
