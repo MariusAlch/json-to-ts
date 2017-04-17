@@ -340,14 +340,18 @@ function findNameById (
   return names.find(_ => _.id === id).name
 }
 
+function isKeyNameValid(keyName: string) {
+  const regex = /^[a-zA-Z][a-zA-Z\d]*$/
+  return regex.test(keyName)
+}
+
 function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): object {
     return Object.entries(typeObj)
       .map(([key, type]) => {
-        const keyWordCount = key.split(' ').length
-
-        return keyWordCount > 1 ?
-            [`'${key}'`, type] :
-            [key, type]
+        const isValid = isKeyNameValid(key)
+        return isValid  ?
+            [key, type] :
+            [`'${key}'`, type]
       })
       .map(([key, type]) => {
         if (isUUID(type)) { // we only need to replace ids not primitive types
