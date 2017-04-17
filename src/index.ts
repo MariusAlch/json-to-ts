@@ -7,6 +7,8 @@ import {
   optimizeTypeStructure
 } from './lib'
 import { Options } from './model';
+import { shim } from 'es7-shim';
+shim();
 
 export default function JsonToTS(json: any, userOptions?: Options): string[] {
   const defaultOptions: Options = {
