@@ -12,7 +12,7 @@ const JsonToTS = require('json-to-ts')
 const json = {
   cats: [
     {name: 'Kittin'},
-    {name: 'Mittin'},
+    {name: 'Mittin'}
   ],
   favoriteNumber: 42,
   favoriteWord: 'Hello'
