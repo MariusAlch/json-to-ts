@@ -118,7 +118,7 @@ describe('Array type merging', function () {
     assert.strictEqual(interfaces.length, 2)
   })
 
-  it('should merge different type field withtout array brackets and different type array with array brackets', function() {
+  it('should solve edge case 1', function() {
     const json = {
       cats: [
         { age: [42]},
@@ -135,7 +135,7 @@ describe('Array type merging', function () {
         dads: any[];
       }`,
       `interface Cat {
-        age: any;
+        age: any[];
       }`,
     ].map(removeWhiteSpace)
 
@@ -149,6 +149,63 @@ describe('Array type merging', function () {
       })
 
     assert.strictEqual(interfaces.length, 2)
+  })
+
+  it('should solve edge case 2', function() {
+    const json = {
+      items: [
+        {
+          billables: [
+            {
+              'quantity': 2,
+              'price': 0
+            }
+          ]
+        },
+        {
+          billables: [
+            {
+              'priceCategory': {
+                'title': 'Adult',
+                'minAge': 0,
+                'maxAge': 99
+              },
+              'quantity': 2,
+              'price': 226
+            }
+          ]
+        }
+      ],
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        items: Item[];
+      }`,
+      `interface Item {
+        billables: Billable[];
+      }`,
+      `interface Billable {
+        quantity: number;
+        price: number;
+        priceCategory?: PriceCategory;
+      }`,
+      `interface PriceCategory {
+        title: string;
+        minAge: number;
+        maxAge: number;
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 4)
   })
 
 })

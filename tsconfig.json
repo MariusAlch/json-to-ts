@@ -4,7 +4,7 @@
         "module": "commonjs",
         "target": "es5",
         "noImplicitAny": false,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "build",
         "lib": [
           "es2017",

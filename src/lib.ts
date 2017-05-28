@@ -135,27 +135,15 @@ function createTypeObject(obj: any, types: TypeDescription[]): any {
     )
 }
 
-// this probably should be split up
-function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): object | undefined {
+function findTypeById(id: string, types: TypeDescription[]): TypeDescription {
+  return types.find(_ => _.id === id)
+}
 
-  // Only items of object type can be merged
-  const canBeMerged = typesOfArray
-    .map(typeId => { // return true if array type
-      const typeDescription = types.find(type => type.id === typeId)
-      return !!(typeDescription && typeDescription.typeObj)
-    })
-    .reduce(
-      (a, b) => a && b,
-      true
-    )
-
-  if (!canBeMerged && typesOfArray.length > 0)
-   return typesOfArray
+function getMergedObjects(typesOfArray: TypeDescription[], types: TypeDescription[]): string {
 
   const typeObjects = typesOfArray
-    .map(typeId => types.find(type => type.id === typeId).typeObj)
+    .map(typeDesc => typeDesc.typeObj)
 
-  // find key that all typeObject has
   const allKeys = typeObjects
     .map(typeObj => Object.keys(typeObj))
     .reduce(
@@ -164,39 +152,34 @@ function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): o
     )
     .filter(onlyUnique)
 
-  const mandatoryKeys = typeObjects.reduce(
-    (alwaysPresentKeys: string[], typeObj) => {
+  const commonKeys = typeObjects.reduce(
+    (commonKeys: string[], typeObj) => {
       const keys = Object.keys(typeObj)
-      return alwaysPresentKeys.filter(key => keys.includes(key))
+      return commonKeys.filter(key => keys.includes(key))
     },
     allKeys
   ) as string[]
 
-  /**
-   * Will return typeId of type that can be applied to
-   * all keys of objects that are in array
-   */
-  const getType = key => {
-    const typesOfArray = typeObjects
+  const getKeyType = key => {
+    const typesOfKey = typeObjects
       .filter(typeObj => {
         return Object.keys(typeObj).includes(key)
       })
       .map(typeObj => typeObj[key])
       .filter(onlyUnique)
 
-    if (typesOfArray.length === 1) {
-      return typesOfArray.pop()
+    if (typesOfKey.length === 1) {
+      return typesOfKey.pop()
     } else {
-      const arrayType = tryMergeArrayTypes(typesOfArray, types)
-      return getIdByType(arrayType, types, true)
+      return tryMergeArrayTypes(typesOfKey, types)
     }
   }
 
   const typeObj = allKeys
     .reduce(
       (obj: object, key: string) => {
-        const isMandatory = mandatoryKeys.includes(key)
-        const type = getType(key)
+        const isMandatory = commonKeys.includes(key)
+        const type = getKeyType(key)
 
         const keyValue = isMandatory ? key : `${key}--?`
 
@@ -207,8 +190,58 @@ function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): o
       },
       {}
     )
-  return typeObj
+  return getIdByType(typeObj, types, true)
 }
+
+function getMergedArrays(typesOfArray: TypeDescription[], types: TypeDescription[]): string {
+  const idsOfArrayTypes = typesOfArray
+    .map(typeDesc => typeDesc.arrayOfTypes)
+    .reduce(
+      (a, b) => [...a, ...b],
+      []
+    )
+    .filter(onlyUnique)
+
+  if (idsOfArrayTypes.length === 1) {
+    return getIdByType([idsOfArrayTypes.pop()], types)
+  } else {
+    return getIdByType([tryMergeArrayTypes(idsOfArrayTypes, types)], types)
+  }
+}
+
+
+// this probably should be split up
+function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): string { // return id of merged or ids of unmerged
+
+  const arrayTypesDescriptions = typesOfArray
+    .map(id => findTypeById(id, types))
+    .filter(_ => !!_)
+
+  const allArrayType = arrayTypesDescriptions
+    .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array)
+    .length === typesOfArray.length
+
+  const allObjectType = arrayTypesDescriptions
+    .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object)
+    .length === typesOfArray.length
+
+  const canBeMerged = allArrayType || allObjectType
+
+  if (!canBeMerged) {
+    if (typesOfArray.length === 1) {
+      return typesOfArray.pop()
+    } else {
+      return getIdByType(typesOfArray, types, true)
+    }
+  }
+
+  if (allObjectType) {
+    return getMergedObjects(arrayTypesDescriptions, types)
+  } else {
+    return getMergedArrays(arrayTypesDescriptions, types)
+  }
+}
+
 
 
 export function getTypeStructure(
@@ -221,16 +254,8 @@ export function getTypeStructure(
       const typesOfArray = (<any[]>targetObj)
         .map( _ => getTypeStructure(_, types).rootTypeId)
         .filter(onlyUnique)
-      const arrayInnerType = tryMergeArrayTypes(typesOfArray, types)
-      const arrayInnerTypeId = getIdByType(arrayInnerType, types)
-
-      let typeId
-      if (isObject(arrayInnerType)) {
-        typeId = getIdByType([arrayInnerTypeId], types)
-      } else {
-        typeId = getIdByType(arrayInnerType, types)
-      }
-
+      const arrayInnerTypeId = tryMergeArrayTypes(typesOfArray, types) // create "union type of array types"
+      const typeId = getIdByType([arrayInnerTypeId], types) // create type "array of union type"
       return {
         rootTypeId: typeId,
         types
@@ -346,20 +371,21 @@ function getNameById (
 
   switch (group) {
     case TypeGroup.Array:
-      if (typeDesc.arrayOfTypes.length === 1) {
-        // if array consist of one type make this array type *singleType*[]
-        const [idOrPrimitive] = typeDesc.arrayOfTypes
-        const arrayType = isHash(idOrPrimitive) ?
-          // array keyName makes no difference in picking name for type
-          getNameById(idOrPrimitive, null, true, types, nameMap) :
-          idOrPrimitive
-        name = `${arrayType}[]`
-      } else if (typeDesc.isUnion) {
-        name = 'any'
-      } else {
-        name = 'any[]'
+      const getName = typeDesc => {
+        if (typeDesc.arrayOfTypes.length === 1) {
+          // if array consist of one type make this array type *singleType*[]
+          const [idOrPrimitive] = typeDesc.arrayOfTypes
+          const arrayType = isHash(idOrPrimitive) ?
+            // array keyName makes no difference in picking name for type
+            getNameById(idOrPrimitive, null, true, types, nameMap) :
+            idOrPrimitive
+          return arrayType
+        } else {
+          return 'any'
+        }
       }
 
+      name = typeDesc.isUnion ? getName(typeDesc) : `${getName(typeDesc)}[]`
       break
 
     case TypeGroup.Object:
