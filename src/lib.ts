@@ -1,15 +1,16 @@
 import {
-  TypeDescription,
   TypeGroup,
-  TypeStructure,
   NameEntry,
   NameStructure,
-  InterfaceDescription
+  InterfaceDescription,
 } from './model'
 
 import * as pluralize from 'pluralize'
+import * as hash from 'hash.js'
+import { prettyPrint } from './index'
+import { TypeDescription, KeyMetaData, TypeStructure } from './model'
 
-function onlyUnique(value, index, self) {
+export function onlyUnique(value, index, self) {
     return self.indexOf(value) === index
 }
 
@@ -21,42 +22,37 @@ function pascalCase (name: string) {
     .reduce((a, b) => a + b)
 }
 
-function createTypeDescription (typeObj: any | string[]): TypeDescription {
+function createTypeDescription (typeObj: any | string[], isUnion): TypeDescription {
   if (isArray(typeObj)) {
     return {
-      id: UUID(),
-      arrayOfTypes: typeObj
+      id: Hash(JSON.stringify(typeObj)),
+      arrayOfTypes: typeObj,
+      isUnion
     }
   } else {
     return {
-      id: UUID(),
+      id: Hash(JSON.stringify(typeObj)),
       typeObj
     }
   }
 }
 
-function getIdByType (typeObj: any | string[], types: TypeDescription[]): string {
+function getIdByType (typeObj: any | string[], types: TypeDescription[], isUnion: boolean = false): string {
 
   let typeDesc = types.find(el => {
     return typeObjectMatchesTypeDesc(typeObj, el)
   })
 
   if (!typeDesc) {
-    typeDesc = createTypeDescription(typeObj)
+    typeDesc = createTypeDescription(typeObj, isUnion)
     types.push(typeDesc)
   }
 
   return typeDesc.id
 }
 
-function UUID (): string {
-  function s4 () {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1)
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4()
+function Hash (content: string): string {
+  return hash.sha1().update(content).digest('hex')
 }
 
 function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: TypeDescription): boolean {
@@ -95,7 +91,7 @@ function hasSamePrimitiveElements(a: any[], b: any[]) {
   return a.every( el => b.indexOf(el) !== -1)
 }
 
-function isArray (x) {
+export function isArray (x) {
   return Object.prototype.toString.call(x) === '[object Array]'
 }
 
@@ -140,6 +136,82 @@ function createTypeObject(obj: any, types: TypeDescription[]): any {
     )
 }
 
+
+function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): object | undefined {
+
+  // Only items of object type can be merged
+  const canBeMerged = typesOfArray
+    .map(typeId => { // return true if array type
+      const typeDescription = types.find(type => type.id === typeId)
+      return !!(typeDescription && typeDescription.typeObj)
+    })
+    .reduce(
+      (a, b) => a && b,
+      true
+    )
+
+  if (!canBeMerged && typesOfArray.length > 0)
+   return typesOfArray
+
+  const typeObjects = typesOfArray
+    .map(typeId => types.find(type => type.id === typeId).typeObj)
+
+  // find key that all typeObject has
+  const allKeys = typeObjects
+    .map(typeObj => Object.keys(typeObj))
+    .reduce(
+      (a, b) => [...a, ...b],
+      []
+    )
+    .filter(onlyUnique)
+
+  const mandatoryKeys = typeObjects.reduce(
+    (alwaysPresentKeys: string[], typeObj) => {
+      const keys = Object.keys(typeObj)
+      return alwaysPresentKeys.filter(key => keys.includes(key))
+    },
+    allKeys
+  ) as string[]
+
+  /**
+   * Will return typeId of type that can be applied to
+   * all keys of objects that are in array
+   */
+  const getType = key => {
+    const typesOfArray = typeObjects
+      .filter(typeObj => {
+        return Object.keys(typeObj).includes(key)
+      })
+      .map(typeObj => typeObj[key])
+      .filter(onlyUnique)
+
+    if (typesOfArray.length === 1) {
+      return typesOfArray.pop()
+    } else {
+      const arrayType = tryMergeArrayTypes(typesOfArray, types)
+      return getIdByType(arrayType, types, true)
+    }
+  }
+
+  const typeObj = allKeys
+    .reduce(
+      (obj: object, key: string) => {
+        const isMandatory = mandatoryKeys.includes(key)
+        const type = getType(key)
+
+        const keyValue = isMandatory ? key : `${key}--?`
+
+        return {
+          ...obj,
+          [keyValue]: type
+        }
+      },
+      {}
+    )
+  return typeObj
+}
+
+
 export function getTypeStructure(
   targetObj: any, // object that we want to create types for
   types: TypeDescription[] = [],
@@ -149,12 +221,19 @@ export function getTypeStructure(
     case TypeGroup.Array:
       const typesOfArray = (<any[]>targetObj)
         .map( _ => getTypeStructure(_, types).rootTypeId)
-        .filter( (id, i, arr) => arr.indexOf(id) === i)
+        .filter(onlyUnique)
+      const arrayInnerType = tryMergeArrayTypes(typesOfArray, types)
+      const arrayInnerTypeId = getIdByType(arrayInnerType, types)
 
-      const arrayType = getIdByType(typesOfArray, types)
+      let typeId
+      if (isObject(arrayInnerType)) {
+        typeId = getIdByType([arrayInnerTypeId], types)
+      } else {
+        typeId = getIdByType(arrayInnerType, types)
+      }
 
       return {
-        rootTypeId: arrayType,
+        rootTypeId: typeId,
         types
       }
 
@@ -177,8 +256,8 @@ export function getTypeStructure(
   }
 }
 
-function isUUID(str: string) {
-  return str.length === 36
+function isHash(str: string) {
+  return str.length === 40
 }
 
 function getTypeDescriptionGroup(desc: TypeDescription): TypeGroup {
@@ -193,6 +272,60 @@ function getTypeDescriptionGroup(desc: TypeDescription): TypeGroup {
 
 function capitalize(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1)
+}
+
+function getName(
+  { rootTypeId, types }: TypeStructure,
+  keyName: string,
+  names: NameEntry[],
+  isInsideArray: boolean,
+): NameStructure {
+  const typeDesc = types.find(_ => _.id === rootTypeId)
+
+  switch (getTypeDescriptionGroup(typeDesc)) {
+
+    case TypeGroup.Array:
+      typeDesc.arrayOfTypes
+        .forEach((typeIdOrPrimitive, i) => {
+          getName(
+            { rootTypeId: typeIdOrPrimitive, types },
+            // to differenttiate array types
+            i === 0 ? keyName : `${keyName}${i + 1}`,
+            names,
+            true
+          )
+        })
+      return {
+        rootName: getNameById(typeDesc.id, keyName, isInsideArray, types, names),
+        names
+      }
+
+    case TypeGroup.Object:
+      Object.entries(typeDesc.typeObj)
+        .forEach( ([key, value]) => {
+          getName(
+          { rootTypeId: value, types },
+          key,
+          names,
+          false
+        )
+        })
+      return {
+        rootName: getNameById(typeDesc.id, keyName, isInsideArray, types, names),
+        names
+      }
+
+    case TypeGroup.Primitive:
+      // in this case rootTypeId is primitive type string (string, null, number, boolean)
+      return {
+        rootName: rootTypeId,
+        names
+      }
+  }
+}
+
+export function getNames(typeStructure: TypeStructure, rootName: string = 'RootObject'): NameEntry[] {
+  return getName(typeStructure, rootName, [], false).names.reverse()
 }
 
 function getNameById (
@@ -214,16 +347,16 @@ function getNameById (
 
   switch (group) {
     case TypeGroup.Array:
-
       if (typeDesc.arrayOfTypes.length === 1) {
         // if array consist of one type make this array type *singleType*[]
         const [idOrPrimitive] = typeDesc.arrayOfTypes
-        let arrayType = isUUID(idOrPrimitive) ?
+        const arrayType = isHash(idOrPrimitive) ?
           // array keyName makes no difference in picking name for type
           getNameById(idOrPrimitive, null, true, types, nameMap) :
           idOrPrimitive
-
         name = `${arrayType}[]`
+      } else if (typeDesc.isUnion) {
+        name = 'any'
       } else {
         name = 'any[]'
       }
@@ -236,6 +369,7 @@ function getNameById (
        * and if not then no need to singularize
        */
       name = [keyName]
+        .map(key => parseKeyMetaData(key).keyValue)
         .map(name => isInsideArray ? pluralize.singular(name) : name)
         .map(pascalCase)
         .map(name => uniqueByIncrement(name, nameMap.map(({name}) => name )))
@@ -257,80 +391,41 @@ function uniqueByIncrement (name: string, names: string[]): string {
   }
 }
 
-function proposeRemoveTypes (typesToDelete: string[], typeDescriptions: TypeDescription[]) {
-  typesToDelete.forEach(type => {
-    const idsOfAllTypes = typeDescriptions
-      .map(desc => {
-        switch (getTypeDescriptionGroup(desc)) {
-          case TypeGroup.Object:
-            return Object.values(desc.typeObj).filter(isUUID)
-          case TypeGroup.Array:
-            return desc.arrayOfTypes
-        }
-      })
-      .reduce(
-        (acc, arr) => [...acc, ...arr],
-        []
-      )
-
-    const shouldDelete = idsOfAllTypes.filter(_ => _ === type).length === 1
-    if (shouldDelete) {
-      const i = typeDescriptions.findIndex(desc => desc.id === type)
-      typeDescriptions.splice(i, 1)
-    }
-  })
-}
-
-function getName(
-  { rootTypeId, types }: TypeStructure,
-  keyName: string,
-  names: NameEntry[],
-  isInsideArray: boolean,
-): NameStructure {
+function getAllUsedTypeIds({rootTypeId, types}: TypeStructure): string[] {
   const typeDesc = types.find(_ => _.id === rootTypeId)
 
-  switch (getTypeDescriptionGroup(typeDesc)) {
+  const subTypes = (typeDesc: TypeDescription) => {
+    switch (getTypeDescriptionGroup(typeDesc)) {
 
-    case TypeGroup.Array:
-      typeDesc.arrayOfTypes
-        .forEach((typeIdOrPrimitive, i) => {
-          return getName(
-            { rootTypeId: typeIdOrPrimitive, types },
-            // to differenttiate array types
-            i === 0 ? keyName : `${keyName}${i + 1}`,
-            names,
-            true
+      case TypeGroup.Array:
+        const arrSubTypes = typeDesc.arrayOfTypes
+          .filter(isHash)
+          .map(typeId => {
+            const typeDesc = types.find(_ => _.id === typeId)
+            return subTypes(typeDesc)
+          })
+          .reduce(
+            (a, b) => [...a, ...b],
+            []
           )
-        })
-      return {
-        rootName: getNameById(typeDesc.id, keyName, isInsideArray, types, names),
-        names
-      }
+        return [typeDesc.id, ...arrSubTypes]
 
-    case TypeGroup.Object:
-      Object.entries(typeDesc.typeObj)
-        .forEach( ([key, value]) => getName(
-          { rootTypeId: value, types },
-          key,
-          names,
-          false
-        ))
-      return {
-        rootName: getNameById(typeDesc.id, keyName, isInsideArray, types, names),
-        names
-      }
-
-    case TypeGroup.Primitive:
-      // in this case rootTypeId is primitive type string (string, null, number, boolean)
-      return {
-        rootName: rootTypeId,
-        names
-      }
+      case TypeGroup.Object:
+        const objSubTypes = Object.values(typeDesc.typeObj)
+          .filter(isHash)
+          .map(typeId => {
+            const typeDesc = types.find(_ => _.id === typeId)
+            return subTypes(typeDesc)
+          })
+          .reduce(
+            (a, b) => [...a, ...b],
+            []
+          )
+        return [typeDesc.id, ...objSubTypes]
+    }
   }
-}
 
-export function getNames(typeStructure: TypeStructure, rootName: string = 'RootObject'): NameEntry[] {
-  return getName(typeStructure, rootName, [], false).names.reverse()
+  return subTypes(typeDesc)
 }
 
 function findNameById (
@@ -345,16 +440,37 @@ function isKeyNameValid(keyName: string) {
   return regex.test(keyName)
 }
 
+function parseKeyMetaData(key: string): KeyMetaData {
+  const isOptional = key.endsWith('--?')
+
+  if (isOptional) {
+    return {
+      isOptional,
+      keyValue: key.slice(0, -3)
+    }
+  } else {
+    return {
+      isOptional,
+      keyValue: key
+    }
+  }
+
+}
+
 function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): object {
     return Object.entries(typeObj)
       .map(([key, type]) => {
-        const isValid = isKeyNameValid(key)
+        const {isOptional, keyValue} = parseKeyMetaData(key)
+        const isValid = isKeyNameValid(keyValue)
+
+        const keyLiteral = isOptional ? `${keyValue}?` : keyValue
+
         return isValid  ?
-            [key, type] :
-            [`'${key}'`, type]
+            [keyLiteral, type] :
+            [`'${keyLiteral}'`, type]
       })
       .map(([key, type]) => {
-        if (isUUID(type)) { // we only need to replace ids not primitive types
+        if (isHash(type)) { // we only need to replace ids not primitive types
           const name = findNameById(type, names)
           return [key, name]
         } else {
@@ -409,29 +525,11 @@ export function getInterfaceStringFromDescription({name, typeMap}: InterfaceDesc
   return interfaceString
 }
 
-export function optimizeTypeStructure ({rootTypeId, types}: TypeStructure) {
-  iterateRec(rootTypeId)
+export function optimizeTypeStructure (typeStructure: TypeStructure) {
+  const usedTypeIds = getAllUsedTypeIds(typeStructure)
 
-  function iterateRec (typeId)  {
-    const typeDesc = types.find(_ => _.id === typeId)
+  const optimizedTypes = typeStructure.types
+    .filter(typeDesc => usedTypeIds.includes(typeDesc.id))
 
-    switch (getTypeDescriptionGroup(typeDesc)) {
-      case TypeGroup.Object:
-        Object.values(typeDesc.typeObj)
-          .filter(isUUID)
-          .forEach(iterateRec)
-        break
-
-      case TypeGroup.Array:
-        typeDesc.arrayOfTypes
-          .filter(isUUID)
-          .forEach(iterateRec)
-
-        if (typeDesc.arrayOfTypes.length > 1) {
-          proposeRemoveTypes(typeDesc.arrayOfTypes, types)
-        }
-      break
-
-    }
-  }
+  typeStructure.types = optimizedTypes
 }

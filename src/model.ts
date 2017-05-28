@@ -4,6 +4,7 @@ export enum TypeGroup {
 
 export interface TypeDescription {
   id: string
+  isUnion?: boolean
   typeObj?: Object
   arrayOfTypes?: string[]
 }
@@ -30,4 +31,9 @@ export interface InterfaceDescription {
 
 export interface Options {
   rootName: string
+}
+
+export interface KeyMetaData {
+  keyValue: string,
+  isOptional: boolean
 }

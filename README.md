@@ -38,6 +38,12 @@ interface Cat {
 }
 ```
 
+## Converter
+- Duplicate type prevention
+- Optional types
+- Array types
+- Object array support
+
 # Setup
 
 ```sh
