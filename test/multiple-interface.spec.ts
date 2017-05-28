@@ -144,27 +144,6 @@ describe('Multiple interfaces', function () {
       })
   })
 
-  // it('should resolve "any" type to arrays containing different types', function() {
-  //   const json = {
-  //     cats: [
-  //       {name: 'Kittin'},
-  //       {label: 'Kittin'}
-  //     ]
-  //   }
-
-  //   const expectedTypes = [
-  //     `interface RootObject {
-  //       cats: any[];
-  //     }`,
-  //   ].map(removeWhiteSpace)
-
-  //   JsonToTS(json)
-  //     .forEach( i => {
-  //       const noWhiteSpaceInterface = removeWhiteSpace(i)
-  //       assert(expectedTypes.includes(noWhiteSpaceInterface))
-  //     })
-  // })
-
   it('should singularize array types (dogs: [...] => dogs: Dog[] )', function() {
     const json = {
       dogs: [

@@ -39,10 +39,10 @@ interface Cat {
 ```
 
 ## Converter
+- Array type merging (**Big deal**)
 - Duplicate type prevention
 - Optional types
 - Array types
-- Object array support
 
 # Setup
 

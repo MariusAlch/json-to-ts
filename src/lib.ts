@@ -7,7 +7,6 @@ import {
 
 import * as pluralize from 'pluralize'
 import * as hash from 'hash.js'
-import { prettyPrint } from './index'
 import { TypeDescription, KeyMetaData, TypeStructure } from './model'
 
 export function onlyUnique(value, index, self) {
@@ -136,7 +135,7 @@ function createTypeObject(obj: any, types: TypeDescription[]): any {
     )
 }
 
-
+// this probably should be split up
 function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): object | undefined {
 
   // Only items of object type can be merged
