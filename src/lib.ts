@@ -181,7 +181,7 @@ function getMergedObjects(typesOfArray: TypeDescription[], types: TypeDescriptio
         const isMandatory = commonKeys.includes(key)
         const type = getKeyType(key)
 
-        const keyValue = isMandatory ? key : `${key}--?`
+        const keyValue = isMandatory ? key : toOptionalKey(key)
 
         return {
           ...obj,
@@ -191,6 +191,10 @@ function getMergedObjects(typesOfArray: TypeDescription[], types: TypeDescriptio
       {}
     )
   return getIdByType(typeObj, types, true)
+}
+
+function toOptionalKey(key: string): string {
+  return key.endsWith('--?') ? key : `${key}--?`
 }
 
 function getMergedArrays(typesOfArray: TypeDescription[], types: TypeDescription[]): string {
@@ -489,7 +493,6 @@ function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): objec
         const isValid = isKeyNameValid(keyValue)
 
         const keyLiteral = isOptional ? `${keyValue}?` : keyValue
-
         return isValid  ?
             [keyLiteral, type] :
             [`'${keyLiteral}'`, type]

@@ -140,7 +140,6 @@ describe('Array type merging', function () {
     ].map(removeWhiteSpace)
 
     const interfaces = JsonToTS(json)
-    interfaces.forEach(_ => console.log(_))
 
     interfaces
       .forEach( i => {
@@ -206,6 +205,53 @@ describe('Array type merging', function () {
       })
 
     assert.strictEqual(interfaces.length, 4)
+  })
+
+  it('should solve edge case 3', function() {
+    const json = [
+      {
+        nestedElements: [
+          {
+            commonField: 42,
+            optionalField: 'field'
+          },
+          {
+            commonField: 42,
+            optionalField3: 'field3'
+          }
+        ]
+      },
+      {
+        nestedElements: [
+          {
+            commonField: '42',
+            optionalField2: 'field2'
+          }
+        ]
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        nestedElements: NestedElement[];
+      }`,
+      `interface NestedElement {
+        commonField: any;
+        optionalField?: string;
+        optionalField3?: string;
+        optionalField2?: string;
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 2)
   })
 
 })
