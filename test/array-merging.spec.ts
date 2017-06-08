@@ -254,4 +254,88 @@ describe('Array type merging', function () {
     assert.strictEqual(interfaces.length, 2)
   })
 
+  it('should merge empty array with primitive types', function() {
+    const json = [
+      {
+        nestedElements: []
+      },
+      {
+        nestedElements: ['kittin']
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        nestedElements: string[];
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
+  it('should merge empty array with object types', function() {
+    const json = [
+      {
+        nestedElements: []
+      },
+      {
+        nestedElements: [{name: 'kittin'}]
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        nestedElements: NestedElement[];
+      }`,
+      `interface NestedElement {
+        name: string;
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 2)
+  })
+
+  it('should merge empty array with array types', function() {
+    const json = [
+      {
+        nestedElements: []
+      },
+      {
+        nestedElements: [['string']]
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        nestedElements: string[][];
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
 })

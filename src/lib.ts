@@ -21,10 +21,10 @@ function pascalCase (name: string) {
     .reduce((a, b) => a + b)
 }
 
-function createTypeDescription (typeObj: any | string[], isUnion): TypeDescription {
+function createTypeDescription (typeObj: any | string[], isUnion: boolean): TypeDescription {
   if (isArray(typeObj)) {
     return {
-      id: Hash(JSON.stringify(typeObj)),
+      id: Hash(JSON.stringify([...typeObj, isUnion])),
       arrayOfTypes: typeObj,
       isUnion
     }
@@ -39,7 +39,7 @@ function createTypeDescription (typeObj: any | string[], isUnion): TypeDescripti
 function getIdByType (typeObj: any | string[], types: TypeDescription[], isUnion: boolean = false): string {
 
   let typeDesc = types.find(el => {
-    return typeObjectMatchesTypeDesc(typeObj, el)
+    return typeObjectMatchesTypeDesc(typeObj, el, isUnion)
   })
 
   if (!typeDesc) {
@@ -54,10 +54,10 @@ function Hash (content: string): string {
   return hash.sha1().update(content).digest('hex')
 }
 
-function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: TypeDescription): boolean {
+function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: TypeDescription, isUnion): boolean {
 
   if (isArray(typeObj)) {
-    return arraysContainSameElements(typeObj, typeDesc.arrayOfTypes)
+    return arraysContainSameElements(typeObj, typeDesc.arrayOfTypes) && typeDesc.isUnion === isUnion
   } else {
     return objectsHaveSameEntries(typeObj, typeDesc.typeObj)
   }
@@ -171,7 +171,7 @@ function getMergedObjects(typesOfArray: TypeDescription[], types: TypeDescriptio
     if (typesOfKey.length === 1) {
       return typesOfKey.pop()
     } else {
-      return tryMergeArrayTypes(typesOfKey, types)
+      return getInnerArrayType(typesOfKey, types)
     }
   }
 
@@ -209,13 +209,29 @@ function getMergedArrays(typesOfArray: TypeDescription[], types: TypeDescription
   if (idsOfArrayTypes.length === 1) {
     return getIdByType([idsOfArrayTypes.pop()], types)
   } else {
-    return getIdByType([tryMergeArrayTypes(idsOfArrayTypes, types)], types)
+    return getIdByType([getInnerArrayType(idsOfArrayTypes, types)], types)
   }
 }
 
+// we merge union types example: (number | string), null -> (number | string | null)
+function getMergedUnion(typesOfArray: string[], types: TypeDescription[]): string {
+  const innerUnionsTypes = typesOfArray
+    .map(id => {
+      return findTypeById(id, types)
+    })
+    .filter(_ => !!_ && _.isUnion)
+    .map(_ => _.arrayOfTypes)
+    .reduce(
+      (a, b) => [...a, ...b],
+      []
+    )
 
-// this probably should be split up
-function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): string { // return id of merged or ids of unmerged
+  const primitiveTypes = typesOfArray
+    .filter(id => !findTypeById(id, types) || !findTypeById(id, types).isUnion) // primitives or not union
+  return getIdByType([...innerUnionsTypes, ...primitiveTypes], types, true)
+}
+
+function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): string { // return inner array type
 
   const arrayTypesDescriptions = typesOfArray
     .map(id => findTypeById(id, types))
@@ -225,28 +241,33 @@ function tryMergeArrayTypes(typesOfArray: string[], types: TypeDescription[]): s
     .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array)
     .length === typesOfArray.length
 
+  const allPrimitiveType = arrayTypesDescriptions.length === 0
+
   const allObjectType = arrayTypesDescriptions
     .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object)
     .length === typesOfArray.length
 
-  const canBeMerged = allArrayType || allObjectType
+  const canBeMerged = arrayTypesDescriptions.length > 0 && (allArrayType || allObjectType)
 
-  if (!canBeMerged) {
-    if (typesOfArray.length === 1) {
-      return typesOfArray.pop()
-    } else {
-      return getIdByType(typesOfArray, types, true)
-    }
+
+  if (typesOfArray.length === 0) { // no types in array -> empty union type
+    return getIdByType([], types, true)
   }
 
-  if (allObjectType) {
-    return getMergedObjects(arrayTypesDescriptions, types)
-  } else {
-    return getMergedArrays(arrayTypesDescriptions, types)
+  if (typesOfArray.length === 1) { // one type in array -> that will be our inner type
+    return typesOfArray.pop()
+  }
+
+  if (typesOfArray.length > 1) { // multiple types in merge array
+    // if all are object we can merge them and return merged object as inner type
+    if (allObjectType) return getMergedObjects(arrayTypesDescriptions, types)
+    // if all are array we can merge them and return merged array as inner type
+    if (allArrayType) return getMergedArrays(arrayTypesDescriptions, types)
+
+    // if they are mixed or all primitive we cant merge them so we return as mixed union type
+    return getMergedUnion(typesOfArray, types)
   }
 }
-
-
 
 export function getTypeStructure(
   targetObj: any, // object that we want to create types for
@@ -258,8 +279,9 @@ export function getTypeStructure(
       const typesOfArray = (<any[]>targetObj)
         .map( _ => getTypeStructure(_, types).rootTypeId)
         .filter(onlyUnique)
-      const arrayInnerTypeId = tryMergeArrayTypes(typesOfArray, types) // create "union type of array types"
+      const arrayInnerTypeId = getInnerArrayType(typesOfArray, types) // create "union type of array types"
       const typeId = getIdByType([arrayInnerTypeId], types) // create type "array of union type"
+
       return {
         rootTypeId: typeId,
         types
@@ -332,11 +354,11 @@ function getName(
       Object.entries(typeDesc.typeObj)
         .forEach( ([key, value]) => {
           getName(
-          { rootTypeId: value, types },
-          key,
-          names,
-          false
-        )
+            { rootTypeId: value, types },
+            key,
+            names,
+            false
+          )
         })
       return {
         rootName: getNameById(typeDesc.id, keyName, isInsideArray, types, names),
