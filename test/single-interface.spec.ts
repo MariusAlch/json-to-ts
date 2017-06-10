@@ -114,4 +114,19 @@ interface RootObject {
     assert.strictEqual(a, b)
   })
 
+  it('should empty array should be any[]', function() {
+    const json = {
+      arr: []
+    }
+
+    const expected = `
+      interface RootObject {
+        arr: any[];
+      }
+    `
+    const actual = JsonToTS(json).pop()
+    const [a, b] = [expected, actual].map(removeWhiteSpace)
+    assert.strictEqual(a, b)
+  })
+
 })

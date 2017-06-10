@@ -427,7 +427,9 @@ function getArrayName(
   types: TypeDescription[],
   nameMap: NameEntry[]
 ): string {
-  if (typeDesc.arrayOfTypes.length === 1) {
+  if (typeDesc.arrayOfTypes.length === 0) {
+    return 'any'
+  } else if (typeDesc.arrayOfTypes.length === 1) {
     const [idOrPrimitive] = typeDesc.arrayOfTypes
     return convertToReadableType(idOrPrimitive, types, nameMap)
   } else {
