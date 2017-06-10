@@ -424,6 +424,7 @@ function getNameById (
         .map(name => isInsideArray ? pluralize.singular(name) : name)
         .map(pascalCase)
         .map(normalizeInvalidTypeName)
+        .map(pascalCase) // needed because removed symbols might leave first character uncapitalized
         .map(name => uniqueByIncrement(name, nameMap.map(({name}) => name )))
         .pop()
       break

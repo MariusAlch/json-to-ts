@@ -294,4 +294,28 @@ describe('Multiple interfaces', function () {
     })
   })
 
+  it('should normalized invalid interface names should pascal case', function() {
+    const json = {
+      '%#hello#@#123#@#': {
+        name: 'dummy string'
+      }
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        '%#hello#@#123#@#': Hello123;
+      }`,
+      `interface Hello123 {
+        name: string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
 })
