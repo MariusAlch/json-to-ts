@@ -247,4 +247,51 @@ describe('Multiple interfaces', function () {
     })
   })
 
+  it('should normalize invalid interface names 1', function() {
+    const json = {
+      '#@#123#@#': {
+        name: 'dummy string'
+      }
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        '#@#123#@#': _123;
+      }`,
+      `interface _123 {
+        name: string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
+  it('should normalize invalid interface names 2', function() {
+    const json = {
+      'hello#@#123#@#': {
+        name: 'dummy string'
+      }
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        'hello#@#123#@#': Hello123;
+      }`,
+      `interface Hello123 {
+        name: string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
 })
