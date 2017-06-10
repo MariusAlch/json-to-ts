@@ -141,7 +141,6 @@ describe('Array type merging', function () {
 
     const interfaces = JsonToTS(json)
 
-    interfaces.forEach(_ => console.log(_))
     interfaces
       .forEach( i => {
         const noWhiteSpaceInterface = removeWhiteSpace(i)
@@ -325,6 +324,33 @@ describe('Array type merging', function () {
     const expectedTypes = [
       `interface RootObject {
         nestedElements: string[][];
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
+  it('should merge union types with readable names ', function() {
+    const json = [
+      {
+        marius: 'marius'
+      },
+      {
+        marius: [42]
+      },
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        marius: number[] | string;
       }`
     ].map(removeWhiteSpace)
 

@@ -395,10 +395,12 @@ function unionToString(
   nameMap: NameEntry[]
 ): string {
   return typeDesc.arrayOfTypes.reduce(
-    (a, b, i) => {
+    (acc, type, i) => {
+      const readableTypeName = convertToReadableType(type, types, nameMap)
       return i === 0 ?
-        a : `${a} | ${b}`
-    }
+        readableTypeName : `${acc} | ${readableTypeName}`
+    },
+    ''
   )
 }
 
