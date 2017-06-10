@@ -40,6 +40,7 @@ interface Cat {
 
 ## Converter
 - Array type merging (**Big deal**)
+- Union types
 - Duplicate type prevention
 - Optional types
 - Array types

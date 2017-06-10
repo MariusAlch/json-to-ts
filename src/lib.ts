@@ -378,12 +378,67 @@ export function getNames(typeStructure: TypeStructure, rootName: string = 'RootO
   return getName(typeStructure, rootName, [], false).names.reverse()
 }
 
+function convertToReadableType(
+  idOrPrimitive: string,
+  types: TypeDescription[],
+  nameMap: NameEntry[]
+): string {
+  return isHash(idOrPrimitive) ?
+    // array keyName makes no difference in picking name for type
+    getNameById(idOrPrimitive, null, true, types, nameMap) :
+    idOrPrimitive
+}
+
+function unionToString(
+  typeDesc: TypeDescription,
+  types: TypeDescription[],
+  nameMap: NameEntry[]
+): string {
+  return typeDesc.arrayOfTypes.reduce(
+    (a, b, i) => {
+      return i === 0 ?
+        a : `${a} | ${b}`
+    }
+  )
+}
+
+function formatArrayName(
+  typeDesc: TypeDescription,
+  types: TypeDescription[],
+  nameMap: NameEntry[]
+): string {
+  const innerTypeId = typeDesc.arrayOfTypes[0]
+  // const isMultipleTypeArray = findTypeById(innerTypeId, types).arrayOfTypes.length > 1
+  const isMultipleTypeArray = isHash(innerTypeId)
+    && findTypeById(innerTypeId, types).isUnion
+    && findTypeById(innerTypeId, types).arrayOfTypes.length > 1
+
+  const readableInnerType = getArrayName(typeDesc, types, nameMap)
+
+  return isMultipleTypeArray ?
+    `(${readableInnerType})[]` : // add semicolons for union type
+    `${readableInnerType}[]`
+}
+
+function getArrayName(
+  typeDesc: TypeDescription,
+  types: TypeDescription[],
+  nameMap: NameEntry[]
+): string {
+  if (typeDesc.arrayOfTypes.length === 1) {
+    const [idOrPrimitive] = typeDesc.arrayOfTypes
+    return convertToReadableType(idOrPrimitive, types, nameMap)
+  } else {
+    return unionToString(typeDesc, types, nameMap)
+  }
+}
+
 function getNameById (
   id: string,
   keyName: string,
   isInsideArray: boolean,
   types: TypeDescription[],
-  nameMap: {id: string, name: string}[]
+  nameMap: NameEntry[]
 ): string {
   let nameEntry = nameMap.find(_ => _.id === id)
 
@@ -391,27 +446,15 @@ function getNameById (
     return nameEntry.name
   }
 
-  const typeDesc = types.find(_ => _.id === id)
+  const typeDesc = findTypeById(id, types)
   const group = getTypeDescriptionGroup(typeDesc)
   let name
 
   switch (group) {
     case TypeGroup.Array:
-      const getName = typeDesc => {
-        if (typeDesc.arrayOfTypes.length === 1) {
-          // if array consist of one type make this array type *singleType*[]
-          const [idOrPrimitive] = typeDesc.arrayOfTypes
-          const arrayType = isHash(idOrPrimitive) ?
-            // array keyName makes no difference in picking name for type
-            getNameById(idOrPrimitive, null, true, types, nameMap) :
-            idOrPrimitive
-          return arrayType
-        } else {
-          return 'any'
-        }
-      }
-
-      name = typeDesc.isUnion ? getName(typeDesc) : `${getName(typeDesc)}[]`
+      name = typeDesc.isUnion ?
+        getArrayName(typeDesc, types, nameMap) :
+        formatArrayName(typeDesc, types, nameMap)
       break
 
     case TypeGroup.Object:

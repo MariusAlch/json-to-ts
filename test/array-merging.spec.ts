@@ -103,7 +103,7 @@ describe('Array type merging', function () {
         cats: Cat[];
       }`,
       `interface Cat {
-        age: any;
+        age: number | string;
       }`,
     ].map(removeWhiteSpace)
 
@@ -132,15 +132,16 @@ describe('Array type merging', function () {
     const expectedTypes = [
       `interface RootObject {
         cats: Cat[];
-        dads: any[];
+        dads: (number | string)[];
       }`,
       `interface Cat {
-        age: any[];
+        age: (number | string)[];
       }`,
     ].map(removeWhiteSpace)
 
     const interfaces = JsonToTS(json)
 
+    interfaces.forEach(_ => console.log(_))
     interfaces
       .forEach( i => {
         const noWhiteSpaceInterface = removeWhiteSpace(i)
@@ -236,7 +237,7 @@ describe('Array type merging', function () {
         nestedElements: NestedElement[];
       }`,
       `interface NestedElement {
-        commonField: any;
+        commonField: number | string;
         optionalField?: string;
         optionalField3?: string;
         optionalField2?: string;
