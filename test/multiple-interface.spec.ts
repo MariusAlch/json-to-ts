@@ -294,7 +294,7 @@ describe('Multiple interfaces', function () {
     })
   })
 
-  it('should normalized invalid interface names should pascal case', function() {
+  it('should normalize invalid interface names to pascal case', function() {
     const json = {
       '%#hello#@#123#@#': {
         name: 'dummy string'
@@ -317,5 +317,65 @@ describe('Multiple interfaces', function () {
       assert(expectedTypes.includes(noWhiteSpaceInterface))
     })
   })
+
+  it('should have question mark after optional invalid interface name', function() {
+    const json = [
+      { 'hello_123': 'sample' },
+      {}
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        'hello_123'?: string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
+  it('should have question mark after null value invalid interface name', function() {
+    const json = {
+      'hello_123': null
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        'hello_123'?: any;
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
+  it('should have question mark after null value invalid optional interface name', function() {
+    const json = [
+      { 'hello_123': null },
+      {}
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        'hello_123'?: any;
+      }`
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces.forEach( i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i)
+      assert(expectedTypes.includes(noWhiteSpaceInterface))
+    })
+  })
+
 
 })

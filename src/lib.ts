@@ -575,20 +575,22 @@ function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): objec
         const {isOptional, keyValue} = parseKeyMetaData(key)
         const isValid = isKeyNameValid(keyValue)
 
-        const keyLiteral = isOptional ? `${keyValue}?` : keyValue
-        return isValid  ?
-            [keyLiteral, type] :
-            [`'${keyLiteral}'`, type]
+        const validName = isValid ? keyValue : `'${keyValue}'`
+
+        return isOptional  ?
+            [`${validName}?`, type, isOptional] :
+            [validName, type, isOptional]
       })
-      .map(([key, type]) => {
+      .map(([key, type, isOptional]) => {
         if (isHash(type)) { // we only need to replace ids not primitive types
           const name = findNameById(type, names)
           return [key, name]
         } else {
-          const entry = type === 'null' ?
-                     [`${key}?`, 'any'] :
-                     [   key   , type]
-          return entry
+          const newType = type === 'null' ? 'any' : type
+          const newKey  = type === 'null' && !isOptional ? // if null and not already optional
+           `${key}?` : key
+
+          return [newKey, newType]
         }
       })
       .reduce(
