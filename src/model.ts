@@ -5,7 +5,7 @@ export enum TypeGroup {
 export interface TypeDescription {
   id: string
   isUnion?: boolean
-  typeObj?: Object
+  typeObj?: {[index: string]: string}
   arrayOfTypes?: string[]
 }
 

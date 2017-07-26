@@ -32,6 +32,115 @@ describe('Array type merging', function () {
     assert.strictEqual(interfaces.length, 2)
   })
 
+  it('union null type should be emited and field should be marked as optional', function() {
+    const json = [
+      { age: 42},
+      { age: null},
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        age?: number;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
+  it('null should stay if it is part of array elements', function() {
+    const json = {
+      arr: [
+        42, '42', null
+      ]
+    }
+
+    const expectedTypes = [
+      `interface RootObject {
+        arr: (null | number | string)[];
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
+  it('array types should be merge even if they are nullable', function() {
+    const json = [
+      {
+        field: ['string']
+      },
+      {
+        field: [42]
+      },
+      {
+        field: null
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        field?: (number | string)[];
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 1)
+  })
+
+  it('object types should be merge even if they are nullable', function() {
+    const json = [
+      {
+        field: { tag: 'world'}
+      },
+      {
+        field: { tag: 42}
+      },
+      {
+        field: null
+      }
+    ]
+
+    const expectedTypes = [
+      `interface RootObject {
+        field?: Field;
+      }`,
+      `interface Field {
+        tag: number | string;
+      }`,
+    ].map(removeWhiteSpace)
+
+    const interfaces = JsonToTS(json)
+    interfaces
+      .forEach( i => {
+        const noWhiteSpaceInterface = removeWhiteSpace(i)
+        assert(expectedTypes.includes(noWhiteSpaceInterface))
+      })
+
+    assert.strictEqual(interfaces.length, 2)
+  })
+
   it('should work with arrays with inner types that has optinal field', function() {
     const json = {
       cats: [

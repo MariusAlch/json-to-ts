@@ -12,6 +12,12 @@ export function isArray (x) {
   return Object.prototype.toString.call(x) === '[object Array]'
 }
 
+export function isNonArrayUnion(typeName: string) {
+  const arrayUnionRegex = /^\(.*\)\[\]$/
+
+  return typeName.includes(' | ') && !arrayUnionRegex.test(typeName)
+}
+
 export function isObject (x) {
   return Object.prototype.toString.call(x) === '[object Object]' && x !== null
 }

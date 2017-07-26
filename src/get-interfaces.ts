@@ -1,5 +1,5 @@
 import { InterfaceDescription, NameEntry, TypeStructure, KeyMetaData } from './model'
-import { isHash, findTypeById } from './util'
+import { isHash, findTypeById, isNonArrayUnion } from './util'
 
 function isKeyNameValid(keyName: string) {
   const regex = /^[a-zA-Z_][a-zA-Z\d_]*$/
@@ -31,37 +31,65 @@ function findNameById (
   return names.find(_ => _.id === id).name
 }
 
-function replaceTypeObjIdsWithNames (typeObj: object, names: NameEntry[]): object {
-    return Object.entries(typeObj)
-      .map(([key, type]) => {
-        const {isOptional, keyValue} = parseKeyMetaData(key)
-        const isValid = isKeyNameValid(keyValue)
+function removeNullFromUnion(unionTypeName: string) {
+  const typeNames = unionTypeName.split(' | ')
+  const nullIndex = typeNames.indexOf('null')
+  typeNames.splice(nullIndex, 1)
+  return typeNames.join(' | ')
+}
 
-        const validName = isValid ? keyValue : `'${keyValue}'`
+function replaceTypeObjIdsWithNames (
+  typeObj: {[index: string]: string},
+  names: NameEntry[]
+): object {
+  return Object.entries(typeObj)
+    // quote key if is invalid and question mark if optional from array merging
+    .map(([key, type]): [string, string, boolean] => {
+      const {isOptional, keyValue} = parseKeyMetaData(key)
+      const isValid = isKeyNameValid(keyValue)
 
-        return isOptional  ?
-            [`${validName}?`, type, isOptional] :
-            [validName, type, isOptional]
-      })
-      .map(([key, type, isOptional]) => {
-        if (isHash(type)) { // we only need to replace ids not primitive types
-          const name = findNameById(type, names)
-          return [key, name]
-        } else {
-          const newType = type === 'null' ? 'any' : type
-          const newKey  = type === 'null' && !isOptional ? // if null and not already optional
-           `${key}?` : key
+      const validName = isValid ? keyValue : `'${keyValue}'`
 
-          return [newKey, newType]
-        }
-      })
-      .reduce(
-        (agg, [key, value]) => {
-          agg[key] = value
-          return agg
-        },
-        {}
-      )
+      return isOptional  ?
+          [`${validName}?`, type, isOptional] :
+          [validName, type, isOptional]
+    })
+    // replace hashes with names referencing the hashes
+    .map(([key, type, isOptional]): [string, string, boolean] => {
+      if (!isHash(type)) {
+        return [key, type, isOptional]
+      }
+
+      const newType = findNameById(type, names)
+      return [key, newType, isOptional]
+    })
+    // if union has null, remove null and make type optional
+    .map(([key, type, isOptional]): [string, string, boolean] => {
+      if (!(isNonArrayUnion(type) && type.includes('null'))) {
+        return [key, type, isOptional]
+      }
+
+      const newType = removeNullFromUnion(type)
+      const newKey  = isOptional ? key : `${key}?` // if already optional dont add question mark
+      return [newKey, newType, isOptional]
+    })
+    // make null optional and set type as any
+    .map(([key, type, isOptional]): [string, string, boolean] => {
+      if (type !== 'null') {
+        return [key, type, isOptional]
+      }
+
+      const newType = 'any'
+      const newKey  = isOptional ? key : `${key}?`// if already optional dont add question mark
+      return [newKey, newType, isOptional]
+    })
+    .reduce(
+      (agg, [key, value]) => {
+        agg[key] = value
+        return agg
+      },
+      {}
+    )
 }
 
 export function getInterfaceStringFromDescription({name, typeMap}: InterfaceDescription): string {

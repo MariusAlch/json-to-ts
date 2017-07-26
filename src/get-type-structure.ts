@@ -40,7 +40,7 @@ function getIdByType (typeObj: any | string[], types: TypeDescription[], isUnion
 }
 
 function Hash (content: string): string {
-  return hash.sha1().update(content).digest('hex')
+  return (hash as any).sha1().update(content).digest('hex')
 }
 
 function typeObjectMatchesTypeDesc (typeObj: any | string[], typeDesc: TypeDescription, isUnion): boolean {
@@ -210,6 +210,8 @@ function getMergedUnion(typesOfArray: string[], types: TypeDescription[]): strin
 
 function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): string { // return inner array type
 
+  const containsNull = typesOfArray.includes('null')
+
   const arrayTypesDescriptions = typesOfArray
     .map(id => findTypeById(id, types))
     .filter(_ => !!_)
@@ -217,6 +219,14 @@ function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): st
   const allArrayType = arrayTypesDescriptions
     .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array)
     .length === typesOfArray.length
+
+  const allArrayTypeWithNull = arrayTypesDescriptions
+    .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array)
+    .length + 1 === typesOfArray.length && containsNull
+
+  const allObjectTypeWithNull = arrayTypesDescriptions
+    .filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object)
+    .length + 1 === typesOfArray.length && containsNull
 
   const allPrimitiveType = arrayTypesDescriptions.length === 0
 
@@ -240,6 +250,22 @@ function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): st
     if (allObjectType) return getMergedObjects(arrayTypesDescriptions, types)
     // if all are array we can merge them and return merged array as inner type
     if (allArrayType) return getMergedArrays(arrayTypesDescriptions, types)
+
+    // all array types with posibble null, result type = null | (*mergedArray*)[]
+    if (allArrayTypeWithNull) {
+      return getMergedUnion(
+        [getMergedArrays(arrayTypesDescriptions, types), 'null'],
+        types
+      )
+    }
+
+    // all object types with posibble null, result type = null | *mergedObject*
+    if (allObjectTypeWithNull) {
+      return getMergedUnion(
+        [getMergedObjects(arrayTypesDescriptions, types), 'null'],
+        types
+      )
+    }
 
     // if they are mixed or all primitive we cant merge them so we return as mixed union type
     return getMergedUnion(typesOfArray, types)
