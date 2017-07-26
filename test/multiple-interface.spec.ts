@@ -320,13 +320,13 @@ describe('Multiple interfaces', function () {
 
   it('should have question mark after optional invalid interface name', function() {
     const json = [
-      { 'hello_123': 'sample' },
+      { 'hello#123': 'sample' },
       {}
     ]
 
     const expectedTypes = [
       `interface RootObject {
-        'hello_123'?: string;
+        'hello#123'?: string;
       }`,
     ].map(removeWhiteSpace)
 
@@ -340,12 +340,12 @@ describe('Multiple interfaces', function () {
 
   it('should have question mark after null value invalid interface name', function() {
     const json = {
-      'hello_123': null
+      'hello#123': null
     }
 
     const expectedTypes = [
       `interface RootObject {
-        'hello_123'?: any;
+        'hello#123'?: any;
       }`
     ].map(removeWhiteSpace)
 
@@ -359,13 +359,13 @@ describe('Multiple interfaces', function () {
 
   it('should have question mark after null value invalid optional interface name', function() {
     const json = [
-      { 'hello_123': null },
+      { 'hello#123': null },
       {}
     ]
 
     const expectedTypes = [
       `interface RootObject {
-        'hello_123'?: any;
+        'hello#123'?: any;
       }`
     ].map(removeWhiteSpace)
 

@@ -548,7 +548,7 @@ function findNameById (
 }
 
 function isKeyNameValid(keyName: string) {
-  const regex = /^[a-zA-Z][a-zA-Z\d]*$/
+  const regex = /^[a-zA-Z_][a-zA-Z\d_]*$/
   return regex.test(keyName)
 }
 
