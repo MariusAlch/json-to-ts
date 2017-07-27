@@ -1,4 +1,4 @@
-![From clipboard](https://image.ibb.co/fTb60k/icon.png)
+![JSON TO TS](https://image.ibb.co/fTb60k/icon.png)
 
 # Json to TS
 
@@ -6,6 +6,7 @@
 
 # Example
 
+### [Try it Online](http://www.jsontots.com)
 ### Code
 
 ```javascript
