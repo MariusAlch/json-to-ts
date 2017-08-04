@@ -1,6 +1,6 @@
 {
   "name": "json-to-ts",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Convert json object to typescript interfaces",
   "keywords": [
     "typescript",
