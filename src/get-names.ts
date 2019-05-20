@@ -6,6 +6,7 @@ import { getTypeDescriptionGroup, parseKeyMetaData, findTypeById, isHash } from 
 function getName(
   { rootTypeId, types }: TypeStructure,
   keyName: string,
+  prefix: string,
   names: NameEntry[],
   isInsideArray: boolean,
 ): NameStructure {
@@ -20,6 +21,7 @@ function getName(
             { rootTypeId: typeIdOrPrimitive, types },
             // to differenttiate array types
             i === 0 ? keyName : `${keyName}${i + 1}`,
+            prefix,
             names,
             true
           )
@@ -31,10 +33,11 @@ function getName(
 
     case TypeGroup.Object:
       Object.entries(typeDesc.typeObj)
-        .forEach( ([key, value]) => {
+        .forEach(([key, value]) => {
           getName(
             { rootTypeId: value, types },
             key,
+            prefix,
             names,
             false
           )
@@ -53,11 +56,11 @@ function getName(
   }
 }
 
-export function getNames(typeStructure: TypeStructure, rootName: string = 'RootObject'): NameEntry[] {
-  return getName(typeStructure, rootName, [], false).names.reverse()
+export function getNames(typeStructure: TypeStructure, rootName: string = 'RootObject', prefix?: string): NameEntry[] {
+  return getName(typeStructure, rootName, prefix, [], false).names.reverse()
 }
 
-function getNameById (
+function getNameById(
   id: string,
   keyName: string,
   isInsideArray: boolean,
@@ -92,17 +95,17 @@ function getNameById (
         .map(pascalCase)
         .map(normalizeInvalidTypeName)
         .map(pascalCase) // needed because removed symbols might leave first character uncapitalized
-        .map(name => uniqueByIncrement(name, nameMap.map(({name}) => name )))
+        .map(name => uniqueByIncrement(name, nameMap.map(({ name }) => name)))
         .pop()
       break
 
   }
 
-  nameMap.push({id, name})
+  nameMap.push({ id, name })
   return name
 }
 
-function pascalCase (name: string) {
+function pascalCase(name: string) {
   return name
     .split(/\s+/g)
     .filter(_ => _ !== '')
@@ -114,7 +117,7 @@ function capitalize(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1)
 }
 
-function normalizeInvalidTypeName (name: string): string {
+function normalizeInvalidTypeName(name: string): string {
   if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(name)) {
     return name
   } else {
@@ -126,7 +129,7 @@ function normalizeInvalidTypeName (name: string): string {
   }
 }
 
-function uniqueByIncrement (name: string, names: string[]): string {
+function uniqueByIncrement(name: string, names: string[]): string {
   for (let i = 0; i < 1000; i++) {
     const nameProposal = i === 0 ? name : `${name}${i + 1}`
     if (!names.includes(nameProposal)) {

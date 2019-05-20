@@ -5,7 +5,7 @@ export enum TypeGroup {
 export interface TypeDescription {
   id: string
   isUnion?: boolean
-  typeObj?: {[index: string]: string}
+  typeObj?: { [index: string]: string }
   arrayOfTypes?: string[]
 }
 
@@ -30,7 +30,8 @@ export interface InterfaceDescription {
 }
 
 export interface Options {
-  rootName: string
+  rootName: string,
+  prefix: string
 }
 
 export interface KeyMetaData {
