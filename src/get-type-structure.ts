@@ -1,8 +1,8 @@
 import * as hash from "hash.js";
 
 import { TypeDescription, TypeStructure } from "./model";
-import { isHash, parseKeyMetaData, getTypeDescriptionGroup, findTypeById, isArray, isObject, onlyUnique } from "./util";
-import { TypeGroup, NameEntry, NameStructure, InterfaceDescription } from "./model";
+import { isHash, getTypeDescriptionGroup, findTypeById, isArray, isObject, onlyUnique, isDate } from "./util";
+import { TypeGroup } from "./model";
 
 function createTypeDescription(typeObj: any | string[], isUnion: boolean): TypeDescription {
   if (isArray(typeObj)) {
@@ -68,20 +68,20 @@ function objectsHaveSameEntries(obj1: any, obj2: any): boolean {
   return sameLength && sameTypes;
 }
 
-function hasSamePrimitiveElements(a: any[], b: any[]) {
-  return a.every(el => b.indexOf(el) !== -1);
-}
-
 function getSimpleTypeName(value: any): string {
   if (value === null) {
     return "null";
+  } else if (value instanceof Date) {
+    return "Date";
   } else {
     return typeof value;
   }
 }
 
 function getTypeGroup(value: any): TypeGroup {
-  if (isArray(value)) {
+  if (isDate(value)) {
+    return TypeGroup.Date;
+  } else if (isArray(value)) {
     return TypeGroup.Array;
   } else if (isObject(value)) {
     return TypeGroup.Object;
@@ -254,10 +254,16 @@ export function getTypeStructure(
       };
 
     case TypeGroup.Primitive:
-      const simpleType = getSimpleTypeName(targetObj);
+      return {
+        rootTypeId: getSimpleTypeName(targetObj),
+        types
+      };
+
+    case TypeGroup.Date:
+      const dateType = getSimpleTypeName(targetObj);
 
       return {
-        rootTypeId: simpleType,
+        rootTypeId: dateType,
         types
       };
   }

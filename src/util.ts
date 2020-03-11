@@ -22,6 +22,10 @@ export function isObject(x) {
   return Object.prototype.toString.call(x) === "[object Object]" && x !== null;
 }
 
+export function isDate(x) {
+  return x instanceof Date;
+}
+
 export function parseKeyMetaData(key: string): KeyMetaData {
   const isOptional = key.endsWith("--?");
 
@@ -48,9 +52,6 @@ export function getTypeDescriptionGroup(desc: TypeDescription): TypeGroup {
   }
 }
 
-export function findTypeById(
-  id: string,
-  types: TypeDescription[]
-): TypeDescription {
+export function findTypeById(id: string, types: TypeDescription[]): TypeDescription {
   return types.find(_ => _.id === id);
 }

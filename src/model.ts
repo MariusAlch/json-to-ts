@@ -1,7 +1,8 @@
 export enum TypeGroup {
   Primitive,
   Array,
-  Object
+  Object,
+  Date
 }
 
 export interface TypeDescription {
