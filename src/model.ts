@@ -33,7 +33,8 @@ export interface InterfaceDescription {
 }
 
 export interface Options {
-  rootName: string;
+  rootName?: string;
+  isUseJSDoc?: boolean;
 }
 
 export interface KeyMetaData {

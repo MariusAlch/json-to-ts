@@ -39,6 +39,43 @@ interface Cat {
 }
 ```
 
+### JSDoc
+Note: use special char(#@! and white-space) as property key will be ignored by vscode
+
+```javascript
+const JsonToTS = require('json-to-ts', {
+  isUseJSDoc: true
+})
+
+const json = {
+  cats: [
+    {name: 'Kittin'},
+    {name: 'Mittin'}
+  ],
+  favoriteNumber: 42,
+  favoriteWord: 'Hello'
+}
+
+JsonToTS(json).forEach( typeInterface => {
+  console.log(typeInterface)
+})
+```
+
+#### Output:
+
+```typescript
+/** 
+ * @typedef {object} RootObject
+ * @property {Cat[]} cats
+ * @property {number} favoriteNumber
+ * @property {string} favoriteWord
+ */
+/**
+ * @typedef {object} Cat
+ * @property {string} name
+ */
+```
+
 ## Converter
 - Array type merging (**Big deal**)
 - Union types

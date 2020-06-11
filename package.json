@@ -17,7 +17,7 @@
     "prepublish": "npm run build",
     "build": "rm -rf ./build && tsc",
     "start": "nodemon -e ts -w src -x 'ts-node src/index.ts'",
-    "test": "npm run build && mocha ./test/js-integration/index.js && mocha ./build/test",
+    "test": "npm run build && mocha ./test/js-integration/index.js && mocha ./build/test && mocha ./build/test/jsdoc",
     "test-reload": "nodemon -e ts -w test -w src -x 'npm test'"
   },
   "author": "https://github.com/mariusalch",
