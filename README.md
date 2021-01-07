@@ -51,3 +51,8 @@ interface Cat {
 ```sh
 $ npm install --save json-to-ts
 ```
+
+# CLI
+
+- https://github.com/molnarmark/json-to-ts-cli
+- https://github.com/LeDDGroup/json-to-ts-cli
