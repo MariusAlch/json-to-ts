@@ -27,12 +27,30 @@ describe("Array type merging", function() {
     assert.strictEqual(interfaces.length, 2);
   });
 
+  it("union undefined type should be emited and field should be marked as optional", function() {
+    const json = [{ age: 42 }, { age: undefined }];
+
+    const expectedTypes = [
+      `interface RootObject {
+        age?: number;
+      }`
+    ].map(removeWhiteSpace);
+
+    const interfaces = JsonToTS(json);
+
+    interfaces.forEach(i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i);
+      assert(expectedTypes.includes(noWhiteSpaceInterface));
+    });
+
+    assert.strictEqual(interfaces.length, 1);
+  });
   it("union null type should be emited and field should be marked as optional", function() {
     const json = [{ age: 42 }, { age: null }];
 
     const expectedTypes = [
       `interface RootObject {
-        age?: number;
+        age: null | number;
       }`
     ].map(removeWhiteSpace);
 
@@ -67,25 +85,28 @@ describe("Array type merging", function() {
     assert.strictEqual(interfaces.length, 1);
   });
 
-  it("array types should be merge even if they are nullable", function() {
+  it("array types should be merge even if they are undefined", function() {
     const json = [
       {
-        field: ["string"]
+        field: ["string"],
       },
       {
-        field: [42]
+        field: [42],
       },
       {
-        field: null
+        field: [null],
       },
       {
-        field: [new Date()]
+        field: undefined,
+      },
+      {
+        field: [new Date()],
       }
     ];
 
     const expectedTypes = [
       `interface RootObject {
-        field?: (Date | number | string )[];
+        field?:(Date|null|number|string)[];
       }`
     ].map(removeWhiteSpace);
 
@@ -93,14 +114,13 @@ describe("Array type merging", function() {
 
     interfaces.forEach(i => {
       const noWhiteSpaceInterface = removeWhiteSpace(i);
-      console.log(noWhiteSpaceInterface);
       assert(expectedTypes.includes(noWhiteSpaceInterface));
     });
 
     assert.strictEqual(interfaces.length, 1);
   });
 
-  it("object types should be merge even if they are nullable", function() {
+  it("object types should be merge even if they are undefined", function() {
     const json = [
       {
         field: { tag: "world" }
@@ -109,7 +129,7 @@ describe("Array type merging", function() {
         field: { tag: 42 }
       },
       {
-        field: null
+        field: undefined
       }
     ];
 

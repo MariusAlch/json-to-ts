@@ -83,7 +83,7 @@ describe("Multiple interfaces", function() {
         name: "Garry",
         parent: {
           name: "Marry",
-          parent: null
+          parent: undefined
         }
       }
     };
@@ -323,7 +323,7 @@ describe("Multiple interfaces", function() {
 
   it("should have question mark after null value invalid interface name", function() {
     const json = {
-      "hello#123": null
+      "hello#123": undefined
     };
 
     const expectedTypes = [
@@ -341,7 +341,7 @@ describe("Multiple interfaces", function() {
   });
 
   it("should have question mark after null value invalid optional interface name", function() {
-    const json = [{ "hello#123": null }, {}];
+    const json = [{ "hello#123": undefined }, {}];
 
     const expectedTypes = [
       `interface RootObject {
