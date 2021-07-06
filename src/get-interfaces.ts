@@ -81,12 +81,13 @@ function replaceTypeObjIdsWithNames(typeObj: { [index: string]: string }, names:
   );
 }
 
-export function getInterfaceStringFromDescription({ name, typeMap }: InterfaceDescription): string {
+export function getInterfaceStringFromDescription({ name, typeMap, useTypeAlias }: InterfaceDescription & { useTypeAlias?: boolean }): string {
   const stringTypeMap = Object.entries(typeMap)
     .map(([key, name]) => `  ${key}: ${name};\n`)
     .reduce((a, b) => (a += b), "");
 
-  let interfaceString = `interface ${name} {\n`;
+  const declarationKeyWord = useTypeAlias ? "type" : "interface";
+  let interfaceString = `${declarationKeyWord} ${name}${useTypeAlias ? " =" : ""} {\n`;
   interfaceString += stringTypeMap;
   interfaceString += "}";
 
