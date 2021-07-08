@@ -303,6 +303,30 @@ describe("Multiple interfaces", function() {
       assert(expectedTypes.includes(noWhiteSpaceInterface));
     });
   });
+  
+  it("should generate types instead of interfaces when useTypeAlias - option is used", function() {
+    const json = {
+      "%#hello#@#123#@#": {
+        name: "dummy string"
+      }
+    };
+
+    const expectedTypes = [
+      `type RootObject = {
+        '%#hello#@#123#@#': Hello123;
+      }`,
+      `type Hello123 = {
+        name: string;
+      }`
+    ].map(removeWhiteSpace);
+
+    const interfaces = JsonToTS(json, {useTypeAlias: true});
+
+    interfaces.forEach(i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i);
+      assert(expectedTypes.includes(noWhiteSpaceInterface));
+    });
+  });
 
   it("should have question mark after optional invalid interface name", function() {
     const json = [{ "hello#123": "sample" }, {}];
