@@ -33,7 +33,8 @@ export interface InterfaceDescription {
 }
 
 export interface Options {
-  rootName: string;
+  rootName?: string;
+  camelCaseKey?: boolean
 }
 
 export interface KeyMetaData {

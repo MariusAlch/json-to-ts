@@ -32,6 +32,7 @@
   "dependencies": {
     "es7-shim": "^6.0.0",
     "hash.js": "^1.0.3",
+    "lodash": "^4.17.21",
     "pluralize": "^3.1.0"
   },
   "devDependencies": {
