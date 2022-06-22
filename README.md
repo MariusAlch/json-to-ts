@@ -6,7 +6,6 @@
 
 # Example
 
-### [Try it Online](http://www.jsontots.com)
 ### Code
 
 ```javascript
