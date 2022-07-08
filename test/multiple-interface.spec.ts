@@ -356,4 +356,44 @@ describe("Multiple interfaces", function() {
       assert(expectedTypes.includes(noWhiteSpaceInterface));
     });
   });
+
+  it("should converted key of object to camelCase", function() {
+    const json = {
+      a_b: {
+        human: { legs_c: 4 }
+      },
+      bFaa: {
+        human: { arms: 2 }
+      },
+      c: {
+        human: { arms: 2 }
+      }
+    };
+
+    const expectedTypes = [
+      `interface RootObject {
+        aB: AB;
+        bFaa: BFaa;
+        c: BFaa;
+      }`,
+      `interface AB {
+        human: Human;
+      }`,
+      `interface BFaa {
+        human: Human2;
+      }`,
+      `interface Human {
+        legsC: number;
+      }`,
+      `interface Human2 {
+        arms: number;
+      }`
+    ].map(removeWhiteSpace);
+
+    const interfaces = JsonToTS(json, {camelCaseKey: true});
+    interfaces.forEach(i => {
+      const noWhiteSpaceInterface = removeWhiteSpace(i);
+      assert(expectedTypes.includes(noWhiteSpaceInterface));
+    });
+  });
 });

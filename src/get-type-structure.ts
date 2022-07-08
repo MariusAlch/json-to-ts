@@ -1,5 +1,5 @@
 import * as hash from "hash.js";
-
+import {camelCase} from 'lodash'
 import { TypeDescription, TypeStructure } from "./model";
 import { isHash, getTypeDescriptionGroup, findTypeById, isArray, isObject, onlyUnique, isDate } from "./util";
 import { TypeGroup } from "./model";
@@ -90,9 +90,11 @@ function getTypeGroup(value: any): TypeGroup {
   }
 }
 
-function createTypeObject(obj: any, types: TypeDescription[]): any {
+function createTypeObject(obj: any, types: TypeDescription[], camelCaseKey: boolean): any {
   return Object.entries(obj).reduce((typeObj, [key, value]) => {
-    const { rootTypeId } = getTypeStructure(value, types);
+    const { rootTypeId } = getTypeStructure(value, types, camelCaseKey);
+
+    key = camelCaseKey ? camelCase(key) : key
 
     return {
       ...typeObj,
@@ -231,11 +233,12 @@ function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): st
 
 export function getTypeStructure(
   targetObj: any, // object that we want to create types for
-  types: TypeDescription[] = []
+  types: TypeDescription[] = [],
+  camelCaseKey = false
 ): TypeStructure {
   switch (getTypeGroup(targetObj)) {
     case TypeGroup.Array:
-      const typesOfArray = (<any[]>targetObj).map(_ => getTypeStructure(_, types).rootTypeId).filter(onlyUnique);
+      const typesOfArray = (<any[]>targetObj).map(_ => getTypeStructure(_, types, camelCaseKey).rootTypeId).filter(onlyUnique);
       const arrayInnerTypeId = getInnerArrayType(typesOfArray, types); // create "union type of array types"
       const typeId = getIdByType([arrayInnerTypeId], types); // create type "array of union type"
 
@@ -245,7 +248,7 @@ export function getTypeStructure(
       };
 
     case TypeGroup.Object:
-      const typeObj = createTypeObject(targetObj, types);
+      const typeObj = createTypeObject(targetObj, types, camelCaseKey);
       const objType = getIdByType(typeObj, types);
 
       return {
