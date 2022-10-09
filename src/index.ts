@@ -3,7 +3,8 @@ import { Options } from "./model";
 import { shim } from "es7-shim/es7-shim";
 import {
   getInterfaceDescriptions,
-  getInterfaceStringFromDescription
+  getInterfaceStringFromDescription,
+  getJSDocStringFromDescription
 } from "./get-interfaces";
 import { getNames } from "./get-names";
 import { isArray, isObject } from "./util";
@@ -41,7 +42,7 @@ export default function JsonToTS(json: any, userOptions?: Options): string[] {
   const names = getNames(typeStructure, options.rootName);
 
   return getInterfaceDescriptions(typeStructure, names).map(
-    getInterfaceStringFromDescription
+    options.isUseJSDoc ? getJSDocStringFromDescription : getInterfaceStringFromDescription
   );
 }
 

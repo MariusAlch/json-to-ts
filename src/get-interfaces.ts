@@ -93,6 +93,25 @@ export function getInterfaceStringFromDescription({ name, typeMap }: InterfaceDe
   return interfaceString;
 }
 
+function getJSDocOptionalKeyString(key: string) {
+  const roption = /\?$/
+  return roption.test(key) ? `[${key.replace(roption, '')}]` : key
+}
+
+export function getJSDocStringFromDescription({ name, typeMap }: InterfaceDescription): string {
+  const stringTypeMap = Object.entries(typeMap)
+    .map(([key, name]) => {
+      return ` * @property {${name}} ${getJSDocOptionalKeyString(key)}\n`
+    })
+    .reduce((a, b) => (a += b), "");
+
+  let interfaceString = `/**\n * @typedef {object} ${name} \n`;
+  interfaceString += stringTypeMap;
+  interfaceString += " */";
+
+  return interfaceString;
+}
+
 export function getInterfaceDescriptions(typeStructure: TypeStructure, names: NameEntry[]): InterfaceDescription[] {
   return names
     .map(({ id, name }) => {
