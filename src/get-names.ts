@@ -101,7 +101,7 @@ function pascalCase(name: string) {
     .split(/\s+/g)
     .filter(_ => _ !== "")
     .map(capitalize)
-    .reduce((a, b) => a + b);
+    .reduce((a, b) => a + b, "");
 }
 
 function capitalize(name: string) {
