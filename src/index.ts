@@ -40,9 +40,9 @@ export default function JsonToTS(json: any, userOptions?: Options): string[] {
 
   const names = getNames(typeStructure, options.rootName);
 
-  return getInterfaceDescriptions(typeStructure, names).map(
-    getInterfaceStringFromDescription
-  );
+  return getInterfaceDescriptions(typeStructure, names).map((description) =>
+    getInterfaceStringFromDescription({ ...description, useTypeAlias: options.useTypeAlias })
+);
 }
 
 (<any>JsonToTS).default = JsonToTS;

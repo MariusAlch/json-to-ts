@@ -60,7 +60,7 @@ interface RootObject {
 
   it("should work with multiple key words and optional fields", function() {
     const json = {
-      "hello world": null
+      "hello world": undefined
     };
 
     const expected = `
@@ -111,7 +111,7 @@ interface RootObject {
 
   it("should add optional field modifier on null values", function() {
     const json = {
-      field: null
+      field: undefined
     };
 
     const expected = `

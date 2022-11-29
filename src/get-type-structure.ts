@@ -177,24 +177,24 @@ function getMergedUnion(typesOfArray: string[], types: TypeDescription[]): strin
 function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): string {
   // return inner array type
 
-  const containsNull = typesOfArray.includes("null");
+  const containsUndefined = typesOfArray.includes("undefined");
 
-  const arrayTypesDescriptions = typesOfArray.map(id => findTypeById(id, types)).filter(_ => !!_);
+  const arrayTypesDescriptions = typesOfArray.map((id) => findTypeById(id, types)).filter((_) => !!_);
 
   const allArrayType =
-    arrayTypesDescriptions.filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array).length ===
+    arrayTypesDescriptions.filter((typeDesc) => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array).length ===
     typesOfArray.length;
 
-  const allArrayTypeWithNull =
-    arrayTypesDescriptions.filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array).length + 1 ===
-      typesOfArray.length && containsNull;
+  const allArrayTypeWithUndefined =
+    arrayTypesDescriptions.filter((typeDesc) => getTypeDescriptionGroup(typeDesc) === TypeGroup.Array).length + 1 ===
+      typesOfArray.length && containsUndefined;
 
-  const allObjectTypeWithNull =
-    arrayTypesDescriptions.filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object).length + 1 ===
-      typesOfArray.length && containsNull;
+  const allObjectTypeWithUndefined =
+    arrayTypesDescriptions.filter((typeDesc) => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object).length + 1 ===
+      typesOfArray.length && containsUndefined;
 
   const allObjectType =
-    arrayTypesDescriptions.filter(typeDesc => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object).length ===
+    arrayTypesDescriptions.filter((typeDesc) => getTypeDescriptionGroup(typeDesc) === TypeGroup.Object).length ===
     typesOfArray.length;
 
   if (typesOfArray.length === 0) {
@@ -214,14 +214,14 @@ function getInnerArrayType(typesOfArray: string[], types: TypeDescription[]): st
     // if all are array we can merge them and return merged array as inner type
     if (allArrayType) return getMergedArrays(arrayTypesDescriptions, types);
 
-    // all array types with posibble null, result type = null | (*mergedArray*)[]
-    if (allArrayTypeWithNull) {
-      return getMergedUnion([getMergedArrays(arrayTypesDescriptions, types), "null"], types);
+    // all array types with posibble undefined, result type = undefined | (*mergedArray*)[]
+    if (allArrayTypeWithUndefined) {
+      return getMergedUnion([getMergedArrays(arrayTypesDescriptions, types), "undefined"], types);
     }
 
-    // all object types with posibble null, result type = null | *mergedObject*
-    if (allObjectTypeWithNull) {
-      return getMergedUnion([getMergedObjects(arrayTypesDescriptions, types), "null"], types);
+    // all object types with posibble undefined, result type = undefined | *mergedObject*
+    if (allObjectTypeWithUndefined) {
+      return getMergedUnion([getMergedObjects(arrayTypesDescriptions, types), "undefined"], types);
     }
 
     // if they are mixed or all primitive we cant merge them so we return as mixed union type
