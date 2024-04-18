@@ -12,24 +12,24 @@ function parseKeyMetaData(key: string): KeyMetaData {
   if (isOptional) {
     return {
       isOptional,
-      keyValue: key.slice(0, -3)
+      keyValue: key.slice(0, -3),
     };
   } else {
     return {
       isOptional,
-      keyValue: key
+      keyValue: key,
     };
   }
 }
 
 function findNameById(id: string, names: NameEntry[]): string {
-  return names.find(_ => _.id === id).name;
+  return names.find((_) => _.id === id).name;
 }
 
-function removeNullFromUnion(unionTypeName: string) {
+function removeUndefinedFromUnion(unionTypeName: string) {
   const typeNames = unionTypeName.split(" | ");
-  const nullIndex = typeNames.indexOf("null");
-  typeNames.splice(nullIndex, 1);
+  const undefinedIndex = typeNames.indexOf("undefined");
+  typeNames.splice(undefinedIndex, 1);
   return typeNames.join(" | ");
 }
 
@@ -54,19 +54,19 @@ function replaceTypeObjIdsWithNames(typeObj: { [index: string]: string }, names:
         const newType = findNameById(type, names);
         return [key, newType, isOptional];
       })
-      // if union has null, remove null and make type optional
+      // if union has undefined, remove undefined and make type optional
       .map(([key, type, isOptional]): [string, string, boolean] => {
-        if (!(isNonArrayUnion(type) && type.includes("null"))) {
+        if (!(isNonArrayUnion(type) && type.includes("undefined"))) {
           return [key, type, isOptional];
         }
 
-        const newType = removeNullFromUnion(type);
+        const newType = removeUndefinedFromUnion(type);
         const newKey = isOptional ? key : `${key}?`; // if already optional dont add question mark
         return [newKey, newType, isOptional];
       })
-      // make null optional and set type as any
+      // make undefined optional and set type as any
       .map(([key, type, isOptional]): [string, string, boolean] => {
-        if (type !== "null") {
+        if (type !== "undefined") {
           return [key, type, isOptional];
         }
 
@@ -81,12 +81,17 @@ function replaceTypeObjIdsWithNames(typeObj: { [index: string]: string }, names:
   );
 }
 
-export function getInterfaceStringFromDescription({ name, typeMap }: InterfaceDescription): string {
+export function getInterfaceStringFromDescription({
+  name,
+  typeMap,
+  useTypeAlias,
+}: InterfaceDescription & { useTypeAlias?: boolean }): string {
   const stringTypeMap = Object.entries(typeMap)
     .map(([key, name]) => `  ${key}: ${name};\n`)
     .reduce((a, b) => (a += b), "");
 
-  let interfaceString = `interface ${name} {\n`;
+  const declarationKeyWord = useTypeAlias ? "type" : "interface";
+  let interfaceString = `${declarationKeyWord} ${name}${useTypeAlias ? " =" : ""} {\n`;
   interfaceString += stringTypeMap;
   interfaceString += "}";
 
@@ -105,5 +110,5 @@ export function getInterfaceDescriptions(typeStructure: TypeStructure, names: Na
         return null;
       }
     })
-    .filter(_ => _ !== null);
+    .filter((_) => _ !== null);
 }

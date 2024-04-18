@@ -2,7 +2,7 @@ export enum TypeGroup {
   Primitive,
   Array,
   Object,
-  Date
+  Date,
 }
 
 export interface TypeDescription {
@@ -33,7 +33,9 @@ export interface InterfaceDescription {
 }
 
 export interface Options {
-  rootName: string;
+  rootName?: string;
+  /** To generate using type alias instead of interface */
+  useTypeAlias?: boolean;
 }
 
 export interface KeyMetaData {
